@@ -102,14 +102,28 @@ export interface ModifierGroup {
   modifiers: Modifier[];
 }
 
+export interface Employee {
+  id: string;
+  _id?: string;
+  name: string;
+  email?: string;
+  roleId: string;
+  roleName?: string;
+  status: UserStatus;
+  restaurantId?: string | null;
+  hasPin?: boolean;
+}
+
 export interface Product {
   _id: string;
   name: string;
   categoryId: string;
+  basePriceTiyns?: number;
   priceTiyns: number;
   availability: ProductAvailability;
   productionCenter: ProductionCenter;
   description?: string;
+  isActive?: boolean;
   modifierGroups?: ModifierGroup[];
 }
 
@@ -191,16 +205,6 @@ export interface Role {
   permissions: string[];
 }
 
-export interface Employee {
-  _id: string;
-  name: string;
-  email?: string;
-  roleId: string;
-  roleName?: string;
-  status: UserStatus;
-  restaurantId?: string | null;
-}
-
 export interface Printer {
   _id: string;
   name: string;
@@ -217,6 +221,7 @@ export interface Discount {
   value: number;
   isActive?: boolean;
   maxPercent?: number;
+  maxPercentAllowed?: number;
 }
 
 export interface DashboardStats {

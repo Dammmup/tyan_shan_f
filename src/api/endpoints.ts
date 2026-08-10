@@ -38,16 +38,18 @@ export const tablesApi = {
 
 export const menuApi = {
   categories: () => api.get<Category[]>('/menu/categories').then((r) => r.data),
-  createCategory: (body: Partial<Category>) =>
+  createCategory: (body: Partial<Category> & { name: string }) =>
     api.post<Category>('/menu/categories', body).then((r) => r.data),
   updateCategory: (id: string, body: Partial<Category>) =>
     api.patch<Category>(`/menu/categories/${id}`, body).then((r) => r.data),
+  removeCategory: (id: string) => api.delete(`/menu/categories/${id}`),
   products: (categoryId?: string) =>
     api.get<Product[]>('/menu/products', { params: { categoryId } }).then((r) => r.data),
-  createProduct: (body: Partial<Product>) =>
+  createProduct: (body: Record<string, unknown>) =>
     api.post<Product>('/menu/products', body).then((r) => r.data),
-  updateProduct: (id: string, body: Partial<Product>) =>
+  updateProduct: (id: string, body: Record<string, unknown>) =>
     api.patch<Product>(`/menu/products/${id}`, body).then((r) => r.data),
+  removeProduct: (id: string) => api.delete(`/menu/products/${id}`),
   setStopList: (id: string, availability: ProductAvailability) =>
     api.patch<Product>(`/menu/products/${id}/stop-list`, { availability }).then((r) => r.data),
 };
@@ -193,12 +195,11 @@ export const printersApi = {
 
 export const discountsApi = {
   list: () => api.get<Discount[]>('/discounts').then((r) => r.data),
-  create: (body: Partial<Discount>) =>
+  create: (body: Record<string, unknown>) =>
     api.post<Discount>('/discounts', body).then((r) => r.data),
-  update: (_id: string, _body: Partial<Discount>) =>
-    Promise.reject(new Error('Discount update is not available in MVP')),
-  remove: (_id: string) =>
-    Promise.reject(new Error('Discount delete is not available in MVP')),
+  update: (id: string, body: Record<string, unknown>) =>
+    api.patch<Discount>(`/discounts/${id}`, body).then((r) => r.data),
+  remove: (id: string) => api.delete(`/discounts/${id}`),
 };
 
 export const reportsApi = {
