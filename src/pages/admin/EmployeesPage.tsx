@@ -18,7 +18,7 @@ import {
 import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
-import { IconEdit, IconKey, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { rolesApi, usersApi } from '../../api/endpoints';
 import type { Employee } from '../../types';
@@ -28,47 +28,87 @@ type EmpForm = {
   email: string;
   password: string;
   roleId: string;
+  pin: string;
 };
+
+function empId(emp: Employee) {
+  return emp.id || emp._id || '';
+}
 
 export function EmployeesPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [opened, setOpened] = useState(false);
-  const [pinOpen, setPinOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
-  const [pinUser, setPinUser] = useState<Employee | null>(null);
-  const [pin, setPin] = useState('');
 
   const usersQuery = useQuery({ queryKey: ['users'], queryFn: usersApi.list });
   const rolesQuery = useQuery({ queryKey: ['roles'], queryFn: rolesApi.list });
 
   const form = useForm<EmpForm>({
-    initialValues: { name: '', email: '', password: '', roleId: '' },
+    initialValues: { name: '', email: '', password: '', roleId: '', pin: '' },
     validate: {
       name: (v) => (v.trim() ? null : t('auth.required')),
-      email: (v) => (/^\S+@\S+$/.test(v) || editing ? null : t('auth.required')),
+      email: (v) => {
+        if (editing) return null;
+        if (!v.trim()) return t('auth.required');
+        return /^\S+@\S+\.\S+$/.test(v) ? null : 'email must be an email';
+      },
       password: (v) => (editing || v.length >= 6 ? null : t('auth.required')),
       roleId: (v) => (v ? null : t('auth.required')),
+      pin: (v) => (!v || v.length >= 4 ? null : 'PIN минимум 4 цифры'),
     },
   });
 
   const roleOptions = useMemo(
-    () => (rolesQuery.data || []).map((r) => ({ value: r._id, label: r.name })),
+    () =>
+      (rolesQuery.data || []).map((r) => ({
+        value: String((r as { _id?: string; id?: string })._id || (r as { id?: string }).id || ''),
+        label: r.name,
+      })).filter((r) => r.value),
     [rolesQuery.data],
   );
+
+  const roleNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of rolesQuery.data || []) {
+      const id = String((r as { _id?: string; id?: string })._id || (r as { id?: string }).id || '');
+      if (id) map.set(id, r.name);
+    }
+    return map;
+  }, [rolesQuery.data]);
+
+  const employees = useMemo(() => {
+    return (usersQuery.data || []).map((emp) => ({
+      ...emp,
+      id: empId(emp),
+      displayName: emp.name || emp.email || empId(emp) || '—',
+      displayRole:
+        emp.roleName ||
+        roleNameById.get(String(emp.roleId)) ||
+        t(`roles.${emp.roleId}`, { defaultValue: '—' }),
+    }));
+  }, [usersQuery.data, roleNameById, t]);
 
   const saveMutation = useMutation({
     mutationFn: async (values: EmpForm) => {
       if (editing) {
-        const id = editing.id || editing._id!;
-        return usersApi.update(id, { name: values.name, roleId: values.roleId });
+        const id = empId(editing);
+        await usersApi.update(id, { name: values.name.trim(), roleId: values.roleId });
+        if (values.pin.trim()) {
+          await usersApi.setPin(id, values.pin.trim());
+        }
+        return;
       }
-      return usersApi.create({
-        name: values.name,
-        email: values.email,
+      const created = await usersApi.create({
+        name: values.name.trim(),
+        email: values.email.trim().toLowerCase(),
         password: values.password,
         roleId: values.roleId,
       });
+      const id = empId(created);
+      if (id && values.pin.trim()) {
+        await usersApi.setPin(id, values.pin.trim());
+      }
     },
     onSuccess: async () => {
       notifications.show({ color: 'teal', message: t('app.success') });
@@ -77,19 +117,15 @@ export function EmployeesPage() {
       form.reset();
       await qc.invalidateQueries({ queryKey: ['users'] });
     },
-    onError: () => notifications.show({ color: 'red', message: t('app.error') }),
-  });
-
-  const pinMutation = useMutation({
-    mutationFn: () => usersApi.setPin(pinUser!.id || pinUser!._id!, pin),
-    onSuccess: async () => {
-      notifications.show({ color: 'teal', message: t('app.success') });
-      setPinOpen(false);
-      setPin('');
-      setPinUser(null);
-      await qc.invalidateQueries({ queryKey: ['users'] });
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { message?: string | string[] } } })?.response?.data
+          ?.message || t('app.error');
+      notifications.show({
+        color: 'red',
+        message: Array.isArray(msg) ? msg.join(', ') : String(msg),
+      });
     },
-    onError: () => notifications.show({ color: 'red', message: t('app.error') }),
   });
 
   const archiveMutation = useMutation({
@@ -108,6 +144,7 @@ export function EmployeesPage() {
       email: '',
       password: '',
       roleId: roleOptions[0]?.value || '',
+      pin: '',
     });
     setOpened(true);
   };
@@ -115,66 +152,24 @@ export function EmployeesPage() {
   const openEdit = (emp: Employee) => {
     setEditing(emp);
     form.setValues({
-      name: emp.name,
+      name: emp.name || '',
       email: emp.email || '',
       password: '',
-      roleId: emp.roleId,
+      roleId: String(emp.roleId || ''),
+      pin: '',
     });
     setOpened(true);
   };
 
-  const confirmArchive = (emp: Employee) => {
+  const confirmArchive = (emp: Employee & { displayName: string }) => {
     modals.openConfirmModal({
       title: t('admin.employees'),
-      children: <Text size="sm">{emp.name}</Text>,
+      children: <Text size="sm">{emp.displayName}</Text>,
       labels: { confirm: t('app.delete'), cancel: t('app.cancel') },
       confirmProps: { color: 'red' },
-      onConfirm: () => archiveMutation.mutate(emp.id || emp._id!),
+      onConfirm: () => archiveMutation.mutate(empId(emp)),
     });
   };
-
-  const rows = (usersQuery.data || []).map((emp) => (
-    <Table.Tr key={emp.id || emp._id}>
-      <Table.Td>
-        <Text fw={600}>{emp.name}</Text>
-        <Text size="xs" c="dimmed">
-          {emp.email}
-        </Text>
-      </Table.Td>
-      <Table.Td>{emp.roleName || '—'}</Table.Td>
-      <Table.Td>
-        <Badge color={emp.status === 'ACTIVE' ? 'teal' : 'gray'} variant="light">
-          {emp.status}
-        </Badge>
-      </Table.Td>
-      <Table.Td>
-        <Badge color={emp.hasPin ? 'teal' : 'gray'} variant="outline">
-          PIN {emp.hasPin ? '✓' : '—'}
-        </Badge>
-      </Table.Td>
-      <Table.Td>
-        <Group gap={6} justify="flex-end">
-          <ActionIcon variant="subtle" color="teal" onClick={() => openEdit(emp)}>
-            <IconEdit size={16} />
-          </ActionIcon>
-          <ActionIcon
-            variant="subtle"
-            color="teal"
-            onClick={() => {
-              setPinUser(emp);
-              setPin('');
-              setPinOpen(true);
-            }}
-          >
-            <IconKey size={16} />
-          </ActionIcon>
-          <ActionIcon variant="subtle" color="red" onClick={() => confirmArchive(emp)}>
-            <IconTrash size={16} />
-          </ActionIcon>
-        </Group>
-      </Table.Td>
-    </Table.Tr>
-  ));
 
   return (
     <Stack gap="md">
@@ -190,14 +185,50 @@ export function EmployeesPage() {
           <Table highlightOnHover verticalSpacing="sm">
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>Name</Table.Th>
+                <Table.Th>Имя</Table.Th>
                 <Table.Th>{t('admin.roles')}</Table.Th>
-                <Table.Th>Status</Table.Th>
+                <Table.Th>Статус</Table.Th>
                 <Table.Th>PIN</Table.Th>
                 <Table.Th />
               </Table.Tr>
             </Table.Thead>
-            <Table.Tbody>{rows}</Table.Tbody>
+            <Table.Tbody>
+              {employees.map((emp) => (
+                <Table.Tr key={emp.id}>
+                  <Table.Td>
+                    <Text fw={600}>{emp.displayName}</Text>
+                    <Text size="xs" c="dimmed">
+                      {emp.email || '—'}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td>{emp.displayRole}</Table.Td>
+                  <Table.Td>
+                    <Badge color={emp.status === 'ACTIVE' ? 'teal' : 'gray'} variant="light">
+                      {emp.status || '—'}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Badge color={emp.hasPin ? 'teal' : 'gray'} variant="outline">
+                      PIN {emp.hasPin ? '✓' : '—'}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Group gap={6} justify="flex-end">
+                      <ActionIcon variant="subtle" color="teal" onClick={() => openEdit(emp)}>
+                        <IconEdit size={16} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        onClick={() => confirmArchive(emp)}
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
           </Table>
         </Table.ScrollContainer>
       </Paper>
@@ -209,9 +240,13 @@ export function EmployeesPage() {
       >
         <form onSubmit={form.onSubmit((v) => saveMutation.mutate(v))}>
           <Stack>
-            <TextInput label={t('auth.name') || 'Name'} {...form.getInputProps('name')} />
+            <TextInput label="Имя" {...form.getInputProps('name')} />
             {!editing && (
-              <TextInput label={t('auth.email')} {...form.getInputProps('email')} />
+              <TextInput
+                label={t('auth.email')}
+                placeholder="waiter@demo.kz"
+                {...form.getInputProps('email')}
+              />
             )}
             {!editing && (
               <PasswordInput label={t('auth.password')} {...form.getInputProps('password')} />
@@ -219,31 +254,24 @@ export function EmployeesPage() {
             <Select
               label={t('admin.roles')}
               data={roleOptions}
+              searchable
               {...form.getInputProps('roleId')}
+            />
+            <PasswordInput
+              label="PIN"
+              description={
+                editing
+                  ? 'Оставьте пустым, чтобы не менять. Минимум 4 цифры.'
+                  : 'Для быстрого входа официанта/кассы. Минимум 4 цифры.'
+              }
+              inputMode="numeric"
+              {...form.getInputProps('pin')}
             />
             <Button type="submit" loading={saveMutation.isPending}>
               {t('app.save')}
             </Button>
           </Stack>
         </form>
-      </Modal>
-
-      <Modal opened={pinOpen} onClose={() => setPinOpen(false)} title="PIN">
-        <Stack>
-          <PasswordInput
-            label="PIN"
-            value={pin}
-            onChange={(e) => setPin(e.currentTarget.value)}
-            inputMode="numeric"
-          />
-          <Button
-            loading={pinMutation.isPending}
-            onClick={() => pinMutation.mutate()}
-            disabled={pin.length < 4}
-          >
-            {t('app.save')}
-          </Button>
-        </Stack>
       </Modal>
     </Stack>
   );
