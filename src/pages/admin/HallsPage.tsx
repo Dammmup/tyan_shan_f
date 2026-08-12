@@ -14,12 +14,14 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
-import { IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconEdit, IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { hallsApi, tablesApi } from '../../api/endpoints';
 import type { Hall, Table as HallTable } from '../../types';
 import { TABLE_STATUS_COLORS } from '../../utils/roles';
@@ -29,6 +31,7 @@ type TableForm = { name: string; seats: number };
 
 export function HallsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [hallId, setHallId] = useState<string | undefined>();
   const [hallModal, setHallModal] = useState(false);
@@ -232,6 +235,23 @@ export function HallsPage() {
                 </Table.Td>
                 <Table.Td>
                   <Group gap={4}>
+                    {table.currentOrderId || table.status === 'OCCUPIED' ? (
+                      <Tooltip label={t('waiter.openOrder')}>
+                        <ActionIcon
+                          variant="subtle"
+                          color="teal"
+                          onClick={() => {
+                            if (table.currentOrderId) {
+                              navigate(`/waiter/orders/${table.currentOrderId}`);
+                            } else {
+                              navigate('/waiter');
+                            }
+                          }}
+                        >
+                          <IconEye size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    ) : null}
                     <ActionIcon variant="subtle" onClick={() => openEditTable(table)}>
                       <IconEdit size={16} />
                     </ActionIcon>

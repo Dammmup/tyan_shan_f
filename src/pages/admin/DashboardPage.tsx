@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { Col, Row, Spin, Typography } from 'antd';
+import { Button, Col, List, Row, Spin, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { reportsApi } from '../../api/endpoints';
+import { useNavigate } from 'react-router-dom';
+import { ordersApi, reportsApi } from '../../api/endpoints';
 import { formatMoney } from '../../utils/money';
+import { formatElapsed } from '../../utils/time';
 
 const { Title, Text } = Typography;
 
@@ -27,9 +29,15 @@ function StatTile({ label, value }: { label: string; value: string }) {
 
 export function DashboardPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: reportsApi.dashboard,
+  });
+  const openOrders = useQuery({
+    queryKey: ['orders', 'open-dashboard'],
+    queryFn: () => ordersApi.list({ open: true }),
+    refetchInterval: 15000,
   });
 
   if (isLoading) return <Spin />;
@@ -56,6 +64,41 @@ export function DashboardPage() {
           <StatTile label={t('admin.guestsToday')} value={String(data?.guestsCount || 0)} />
         </Col>
       </Row>
+
+      <div style={{ marginTop: 28 }}>
+        <Title level={4} style={{ fontFamily: 'Fraunces, serif' }}>
+          {t('admin.openTables')}
+        </Title>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          {t('admin.openTablesHint')}
+        </Text>
+        <List
+          loading={openOrders.isLoading}
+          locale={{ emptyText: t('app.empty') }}
+          dataSource={openOrders.data || []}
+          renderItem={(order) => (
+            <List.Item
+              actions={[
+                <Button
+                  key="open"
+                  type="primary"
+                  onClick={() => navigate(`/waiter/orders/${order._id}`)}
+                >
+                  {t('waiter.openOrder')}
+                </Button>,
+              ]}
+            >
+              <List.Item.Meta
+                title={`#${order.number ?? String(order._id).slice(-4)} · ${t(`orderStatus.${order.status}`, { defaultValue: order.status })}`}
+                description={`${formatMoney(order.totalTiyns || 0)} · ${formatElapsed(order.createdAt)}`}
+              />
+            </List.Item>
+          )}
+        />
+        <Button size="large" style={{ marginTop: 8 }} onClick={() => navigate('/waiter')}>
+          {t('waiter.title')}
+        </Button>
+      </div>
     </div>
   );
 }

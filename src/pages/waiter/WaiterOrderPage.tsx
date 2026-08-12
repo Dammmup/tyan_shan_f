@@ -6,6 +6,7 @@ import {
   Divider,
   Drawer,
   Flex,
+  Input,
   InputNumber,
   List,
   Modal,
@@ -61,6 +62,7 @@ export function WaiterOrderPage() {
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [product, setProduct] = useState<Product | null>(null);
   const [qty, setQty] = useState(1);
+  const [itemNote, setItemNote] = useState('');
   const [modifierIds, setModifierIds] = useState<string[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [discountOpen, setDiscountOpen] = useState(false);
@@ -104,11 +106,13 @@ export function WaiterOrderPage() {
         productId: product!._id,
         quantity: qty,
         modifierIds,
+        note: itemNote.trim() || undefined,
       }),
     onSuccess: async () => {
       message.success(t('app.success'));
       setProduct(null);
       setQty(1);
+      setItemNote('');
       setModifierIds([]);
       await invalidate();
     },
@@ -289,6 +293,7 @@ export function WaiterOrderPage() {
                 onClick={() => {
                   setProduct(p);
                   setQty(1);
+                  setItemNote('');
                   setModifierIds([]);
                 }}
                 style={{
@@ -395,7 +400,12 @@ export function WaiterOrderPage() {
       <Modal
         open={Boolean(product)}
         title={product?.name}
-        onCancel={() => setProduct(null)}
+        onCancel={() => {
+          setProduct(null);
+          setItemNote('');
+          setModifierIds([]);
+          setQty(1);
+        }}
         onOk={() => addMutation.mutate()}
         confirmLoading={addMutation.isPending}
         okText={t('waiter.add')}
@@ -411,6 +421,18 @@ export function WaiterOrderPage() {
               onChange={(v) => setQty(Number(v) || 1)}
               size="large"
               style={{ width: '100%', marginTop: 8 }}
+            />
+          </div>
+          <div>
+            <Text>{t('waiter.itemNote')}</Text>
+            <Input.TextArea
+              value={itemNote}
+              onChange={(e) => setItemNote(e.target.value)}
+              placeholder={t('waiter.itemNotePlaceholder')}
+              maxLength={200}
+              rows={2}
+              style={{ marginTop: 8 }}
+              size="large"
             />
           </div>
           {(product?.modifierGroups || []).map((group) => (
@@ -465,11 +487,14 @@ export function WaiterOrderPage() {
               <List.Item.Meta
                 title={`${item.quantity}× ${item.nameSnapshot}`}
                 description={
-                  <Space size={8} wrap>
-                    <span>{formatMoney(itemLineTotalTiyns(item))}</span>
-                    {item.productionCenter ? (
-                      <Tag>{centerLabel(item.productionCenter)}</Tag>
-                    ) : null}
+                  <Space size={8} wrap direction="vertical">
+                    <Space size={8} wrap>
+                      <span>{formatMoney(itemLineTotalTiyns(item))}</span>
+                      {item.productionCenter ? (
+                        <Tag>{centerLabel(item.productionCenter)}</Tag>
+                      ) : null}
+                    </Space>
+                    {item.note ? <Text type="secondary">{item.note}</Text> : null}
                   </Space>
                 }
               />
@@ -497,12 +522,15 @@ export function WaiterOrderPage() {
               <List.Item.Meta
                 title={`${item.quantity}× ${item.nameSnapshot}`}
                 description={
-                  <Space>
-                    <Tag>{item.status}</Tag>
-                    {item.productionCenter ? (
-                      <Tag color="blue">{centerLabel(item.productionCenter)}</Tag>
-                    ) : null}
-                    <span>{formatMoney(itemLineTotalTiyns(item))}</span>
+                  <Space direction="vertical" size={4}>
+                    <Space wrap>
+                      <Tag>{item.status}</Tag>
+                      {item.productionCenter ? (
+                        <Tag color="blue">{centerLabel(item.productionCenter)}</Tag>
+                      ) : null}
+                      <span>{formatMoney(itemLineTotalTiyns(item))}</span>
+                    </Space>
+                    {item.note ? <Text type="secondary">{item.note}</Text> : null}
                   </Space>
                 }
               />

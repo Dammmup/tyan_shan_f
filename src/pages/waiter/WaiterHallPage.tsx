@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Flex,
@@ -17,16 +17,24 @@ import { TABLE_STATUS_COLORS } from '../../utils/roles';
 import { formatDateTime, formatElapsed } from '../../utils/time';
 import { connectSocket, joinRestaurantRoom } from '../../websocket/socket';
 import { useAuthStore } from '../../stores/authStore';
-import { useEffect } from 'react';
-import type { Table } from '../../types';
+import type { Order, Table } from '../../types';
 
 const { Text } = Typography;
+
+function idOf(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value && '_id' in value) {
+    return String((value as { _id: unknown })._id);
+  }
+  return String(value);
+}
 
 export function WaiterHallPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const restaurantId = useAuthStore((s) => s.restaurantId);
+  const restaurantId = useAuthStore((s) => s.restaurantId || s.user?.restaurantId);
   const [hallId, setHallId] = useState<string | undefined>();
   const [createFor, setCreateFor] = useState<Table | null>(null);
   const [guests, setGuests] = useState(2);
@@ -37,14 +45,21 @@ export function WaiterHallPage() {
     if (restaurantId) joinRestaurantRoom(restaurantId);
     const refresh = () => {
       void queryClient.invalidateQueries({ queryKey: ['tables'] });
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
     };
     s.on('TABLE_UPDATED', refresh);
     s.on('ORDER_UPDATED', refresh);
+    s.on('ORDER_CREATED', refresh);
     s.on('PAYMENT_CREATED', refresh);
+    s.on('ORDER_CANCELLED', refresh);
+    s.on('ORDER_PAID', refresh);
     return () => {
       s.off('TABLE_UPDATED', refresh);
       s.off('ORDER_UPDATED', refresh);
+      s.off('ORDER_CREATED', refresh);
       s.off('PAYMENT_CREATED', refresh);
+      s.off('ORDER_CANCELLED', refresh);
+      s.off('ORDER_PAID', refresh);
     };
   }, [restaurantId, queryClient]);
 
@@ -59,6 +74,7 @@ export function WaiterHallPage() {
     queryKey: ['tables', activeHallId],
     queryFn: () => tablesApi.list(activeHallId),
     enabled: Boolean(activeHallId),
+    refetchInterval: 15000,
   });
 
   const tables = tablesQuery.data || [];
@@ -66,13 +82,14 @@ export function WaiterHallPage() {
   const openOrdersQuery = useQuery({
     queryKey: ['orders', 'open-hall'],
     queryFn: () => ordersApi.list({ open: true }),
-    refetchInterval: 20000,
+    refetchInterval: 10000,
   });
 
-  const orderTimeByTable = useMemo(() => {
-    const map = new Map<string, string>();
+  const orderByTableId = useMemo(() => {
+    const map = new Map<string, Order>();
     for (const o of openOrdersQuery.data || []) {
-      if (o.tableId && o.createdAt) map.set(o.tableId, o.createdAt);
+      const tid = idOf(o.tableId);
+      if (tid) map.set(tid, o);
     }
     return map;
   }, [openOrdersQuery.data]);
@@ -82,30 +99,47 @@ export function WaiterHallPage() {
     [hallsQuery.data],
   );
 
+  const resolveOrderId = (table: Table): string | undefined => {
+    const fromMap = orderByTableId.get(idOf(table._id));
+    if (fromMap?._id) return idOf(fromMap._id);
+    const linked = idOf(table.currentOrderId);
+    return linked || undefined;
+  };
+
   const openTable = async (table: Table) => {
     if (table.status === 'DISABLED') return;
 
-    if (table.currentOrderId) {
-      navigate(`/waiter/orders/${table.currentOrderId}`);
+    const knownOrderId = resolveOrderId(table);
+    if (knownOrderId) {
+      navigate(`/waiter/orders/${knownOrderId}`);
       return;
     }
 
-    if (table.status === 'OCCUPIED') {
-      // try find open order for table
+    // Occupied / reserved: resolve via open orders, or create (backend returns existing if any)
+    if (table.status === 'OCCUPIED' || table.status === 'RESERVED' || Boolean(table.currentOrderId)) {
       try {
+        setBusy(true);
         const orders = await ordersApi.list({ open: true });
-        const found = orders.find((o) => o.tableId === table._id);
+        const found = orders.find((o) => idOf(o.tableId) === idOf(table._id));
         if (found) {
-          navigate(`/waiter/orders/${found._id}`);
+          navigate(`/waiter/orders/${idOf(found._id)}`);
           return;
         }
+        const order = await ordersApi.create({
+          tableId: table._id,
+          guests: table.capacity || table.seats || 2,
+        });
+        navigate(`/waiter/orders/${idOf(order._id)}`);
       } catch {
-        // fall through to create
+        message.error(t('app.error'));
+      } finally {
+        setBusy(false);
       }
+      return;
     }
 
     setCreateFor(table);
-    setGuests(table.capacity || 2);
+    setGuests(table.capacity || table.seats || 2);
   };
 
   const createOrder = async () => {
@@ -115,6 +149,8 @@ export function WaiterHallPage() {
       const order = await ordersApi.create({ tableId: createFor._id, guests });
       message.success(t('app.success'));
       setCreateFor(null);
+      await queryClient.invalidateQueries({ queryKey: ['tables'] });
+      await queryClient.invalidateQueries({ queryKey: ['orders'] });
       navigate(`/waiter/orders/${order._id}`);
     } catch {
       message.error(t('app.error'));
@@ -153,16 +189,18 @@ export function WaiterHallPage() {
           }}
         >
           {tables.map((table) => {
-            const color = TABLE_STATUS_COLORS[table.status] || '#8a8175';
-            const openedAt =
-              orderTimeByTable.get(table._id) ||
-              (table.currentOrderId
-                ? openOrdersQuery.data?.find((o) => o._id === table.currentOrderId)?.createdAt
-                : undefined);
+            const order = orderByTableId.get(idOf(table._id));
+            const isBusy =
+              Boolean(order) || table.status === 'OCCUPIED' || Boolean(table.currentOrderId);
+            const color = isBusy
+              ? TABLE_STATUS_COLORS.OCCUPIED
+              : TABLE_STATUS_COLORS[table.status] || '#8a8175';
+            const openedAt = order?.createdAt;
             return (
               <button
                 key={table._id}
                 type="button"
+                disabled={busy}
                 onClick={() => void openTable(table)}
                 style={{
                   minHeight: 110,
@@ -181,9 +219,14 @@ export function WaiterHallPage() {
                   {table.name}
                 </div>
                 <Text style={{ color: 'rgba(255,255,255,0.9)', display: 'block' }}>
-                  {t(`tableStatus.${table.status}`)}
+                  {isBusy ? t('tableStatus.OCCUPIED') : t(`tableStatus.${table.status}`)}
                 </Text>
-                {openedAt ? (
+                {order ? (
+                  <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12 }}>
+                    #{order.number ?? idOf(order._id).slice(-4)}
+                    {openedAt ? ` · ${formatElapsed(openedAt)}` : ''}
+                  </Text>
+                ) : openedAt ? (
                   <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
                     {formatDateTime(openedAt)} · {formatElapsed(openedAt)}
                   </Text>
