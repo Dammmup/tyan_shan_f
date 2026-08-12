@@ -90,7 +90,32 @@ export function LoginPage() {
 
         <Tabs
           centered
+          defaultActiveKey="pin"
           items={[
+            {
+              key: 'pin',
+              label: t('auth.pinTab'),
+              children: (
+                <Form layout="vertical" onFinish={(v) => void onPin(v)} size="large">
+                  <Form.Item
+                    name="pin"
+                    label={t('auth.pin')}
+                    rules={[{ required: true, message: t('auth.required') }]}
+                  >
+                    <Input
+                      prefix={<NumberOutlined />}
+                      inputMode="numeric"
+                      maxLength={8}
+                      autoComplete="one-time-code"
+                      autoFocus
+                    />
+                  </Form.Item>
+                  <Button type="primary" htmlType="submit" block loading={loading} style={{ height: 48 }}>
+                    {t('auth.submit')}
+                  </Button>
+                </Form>
+              ),
+            },
             {
               key: 'password',
               label: t('auth.passwordTab'),
@@ -109,29 +134,6 @@ export function LoginPage() {
                     rules={[{ required: true, message: t('auth.required') }]}
                   >
                     <Input.Password prefix={<LockOutlined />} autoComplete="current-password" />
-                  </Form.Item>
-                  <Button type="primary" htmlType="submit" block loading={loading} style={{ height: 48 }}>
-                    {t('auth.submit')}
-                  </Button>
-                </Form>
-              ),
-            },
-            {
-              key: 'pin',
-              label: t('auth.pinTab'),
-              children: (
-                <Form layout="vertical" onFinish={(v) => void onPin(v)} size="large">
-                  <Form.Item
-                    name="pin"
-                    label={t('auth.pin')}
-                    rules={[{ required: true, message: t('auth.required') }]}
-                  >
-                    <Input.Password
-                      prefix={<NumberOutlined />}
-                      inputMode="numeric"
-                      maxLength={8}
-                      autoComplete="one-time-code"
-                    />
                   </Form.Item>
                   <Button type="primary" htmlType="submit" block loading={loading} style={{ height: 48 }}>
                     {t('auth.submit')}
