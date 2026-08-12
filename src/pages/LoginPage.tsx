@@ -35,11 +35,11 @@ export function LoginPage() {
     }
   };
 
-  const onPin = async (values: { pin: string; restaurantId?: string }) => {
+  const onPin = async (values: { pin: string }) => {
     setLoading(true);
     setError(null);
     try {
-      const user = await loginPin(values.pin, values.restaurantId);
+      const user = await loginPin(values.pin);
       afterLogin(user.role);
     } catch {
       setError(t('auth.loginFailed'));
@@ -132,9 +132,6 @@ export function LoginPage() {
                       maxLength={8}
                       autoComplete="one-time-code"
                     />
-                  </Form.Item>
-                  <Form.Item name="restaurantId" label={t('auth.restaurantId')}>
-                    <Input />
                   </Form.Item>
                   <Button type="primary" htmlType="submit" block loading={loading} style={{ height: 48 }}>
                     {t('auth.submit')}

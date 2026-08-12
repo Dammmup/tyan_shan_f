@@ -11,7 +11,7 @@ interface AuthState {
   refreshToken: string | null;
   restaurantId: string | null;
   login: (email: string, password: string) => Promise<AuthUser>;
-  loginPin: (pin: string, restaurantId?: string) => Promise<AuthUser>;
+  loginPin: (pin: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   setTokens: (tokens: AuthTokens) => void;
   setSession: (data: LoginResponse) => void;
@@ -62,10 +62,9 @@ export const useAuthStore = create<AuthState>()(
         return normalizeUser(data);
       },
 
-      loginPin: async (pin, restaurantId) => {
+      loginPin: async (pin) => {
         const { data } = await axios.post<LoginResponse>(`${baseURL}/auth/login-pin`, {
           pin,
-          restaurantId: restaurantId || get().restaurantId || undefined,
         });
         get().setSession(data);
         return normalizeUser(data);
