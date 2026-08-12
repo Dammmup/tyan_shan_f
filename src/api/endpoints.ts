@@ -131,6 +131,10 @@ export const ordersApi = {
     api.delete(`/orders/${orderId}/items/${itemId}`).then(async () => ordersApi.get(orderId)),
   cancel: (orderId: string) =>
     api.post(`/orders/${orderId}/cancel`).then(async () => ordersApi.get(orderId)),
+  setPrepaid: (
+    orderId: string,
+    body: { amountTiyns: number; method?: 'CASH' | 'CARD'; note?: string },
+  ) => api.post(`/orders/${orderId}/prepaid`, body).then(async () => ordersApi.get(orderId)),
   transfer: (orderId: string, body: { targetTableId: string; itemIds?: string[] }) =>
     api
       .post<{ source: Order; target: Order }>(`/orders/${orderId}/transfer`, body)

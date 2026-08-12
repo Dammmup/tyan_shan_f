@@ -22,9 +22,10 @@ import { PercentageOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
+import { SetPrepaidModal } from '../../components/SetPrepaidModal';
 import { StaffHeader } from '../../components/StaffHeader';
 import { ordersApi, paymentsApi, shiftsApi } from '../../api/endpoints';
-import { formatMoney, tengeToTiyns, tiynsToTenge } from '../../utils/money';
+import { formatMoney, orderDueTiyns, tengeToTiyns, tiynsToTenge } from '../../utils/money';
 import { formatDateTime, formatElapsed } from '../../utils/time';
 import type { Order, PaymentMethod } from '../../types';
 
@@ -42,6 +43,7 @@ export function CashierPage() {
   const [shiftModal, setShiftModal] = useState<'open' | 'close' | null>(null);
   const [cashModal, setCashModal] = useState<'in' | 'out' | null>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
+  const [prepaidOpen, setPrepaidOpen] = useState(false);
   const [cashAmount, setCashAmount] = useState(0);
   const [cashComment, setCashComment] = useState('');
 
@@ -63,12 +65,14 @@ export function CashierPage() {
   useEffect(() => {
     if (selected) {
       setSelectedId(selected._id);
-      const tenge = tiynsToTenge(selected.totalTiyns);
+      const tenge = tiynsToTenge(orderDueTiyns(selected));
       setReceivedTenge(tenge);
       setCashPartTenge(Math.floor(tenge / 2));
       setCardPartTenge(tenge - Math.floor(tenge / 2));
     }
-  }, [selected?._id, selected?.totalTiyns]);
+  }, [selected?._id, selected?.totalTiyns, selected?.prepaidTiyns]);
+
+  const dueTiyns = selected ? orderDueTiyns(selected) : 0;
 
   const payMutation = useMutation({
     mutationFn: async () => {
@@ -77,7 +81,7 @@ export function CashierPage() {
         return paymentsApi.create({
           orderId: selected._id,
           method: 'CASH',
-          amountTiyns: selected.totalTiyns,
+          amountTiyns: dueTiyns,
           receivedCashTiyns: tengeToTiyns(receivedTenge),
         });
       }
@@ -85,7 +89,7 @@ export function CashierPage() {
         return paymentsApi.create({
           orderId: selected._id,
           method: 'CARD',
-          amountTiyns: selected.totalTiyns,
+          amountTiyns: dueTiyns,
         });
       }
       return paymentsApi.create({
@@ -144,7 +148,7 @@ export function CashierPage() {
 
   const changeTiyns =
     selected && method === 'CASH'
-      ? Math.max(0, tengeToTiyns(receivedTenge) - selected.totalTiyns)
+      ? Math.max(0, tengeToTiyns(receivedTenge) - dueTiyns)
       : 0;
 
   const shift = shiftQuery.data;
@@ -227,23 +231,27 @@ export function CashierPage() {
               ) : (
                 <>
                   <Title level={3} style={{ marginTop: 0, fontFamily: 'Fraunces, serif' }}>
-                    {t('payment.total')}: {formatMoney(selected.totalTiyns)}
+                    {t('waiter.due')}: {formatMoney(dueTiyns)}
                   </Title>
                   <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-                    {t('waiter.subtotal')}: {formatMoney(selected.subtotalTiyns || 0)}
-                    {(selected.discountTiyns || 0) > 0
-                      ? ` · ${t('waiter.discount')}: −${formatMoney(selected.discountTiyns || 0)}`
+                    {t('payment.total')}: {formatMoney(selected.totalTiyns)}
+                    {(selected.prepaidTiyns || 0) > 0
+                      ? ` · ${t('waiter.prepaid')}: −${formatMoney(selected.prepaidTiyns || 0)}`
                       : ''}
                     {' · '}
                     {t('waiter.service')}: {formatMoney(selected.serviceChargeTiyns || 0)}
                   </Text>
-                  <Button
-                    icon={<PercentageOutlined />}
-                    style={{ marginBottom: 16 }}
-                    onClick={() => setDiscountOpen(true)}
-                  >
-                    {t('waiter.applyDiscount')}
-                  </Button>
+                  <Space wrap style={{ marginBottom: 16 }}>
+                    <Button
+                      icon={<PercentageOutlined />}
+                      onClick={() => setDiscountOpen(true)}
+                    >
+                      {t('waiter.applyDiscount')}
+                    </Button>
+                    <Button onClick={() => setPrepaidOpen(true)}>
+                      {t('waiter.prepaid')}
+                    </Button>
+                  </Space>
                   <Radio.Group
                     value={method}
                     onChange={(e) => setMethod(e.target.value as PaymentMethod)}
@@ -387,6 +395,13 @@ export function CashierPage() {
           open={discountOpen}
           orderId={selected._id}
           onClose={() => setDiscountOpen(false)}
+        />
+      )}
+      {selected && (
+        <SetPrepaidModal
+          open={prepaidOpen}
+          order={selected}
+          onClose={() => setPrepaidOpen(false)}
         />
       )}
     </div>

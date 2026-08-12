@@ -174,6 +174,9 @@ export interface Order {
   discountTiyns?: number;
   serviceChargeTiyns?: number;
   totalTiyns: number;
+  prepaidTiyns?: number;
+  prepaidMethod?: 'CASH' | 'CARD' | null;
+  prepaidNote?: string;
   createdAt?: string;
   updatedAt?: string;
 }

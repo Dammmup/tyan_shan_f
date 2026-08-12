@@ -19,6 +19,7 @@ import {
 import {
   ArrowLeftOutlined,
   DeleteOutlined,
+  DollarOutlined,
   FileTextOutlined,
   PercentageOutlined,
   PlusOutlined,
@@ -30,9 +31,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
+import { SetPrepaidModal } from '../../components/SetPrepaidModal';
 import { StaffHeader } from '../../components/StaffHeader';
 import { menuApi, ordersApi, tablesApi } from '../../api/endpoints';
-import { formatMoney, itemLineTotalTiyns } from '../../utils/money';
+import { formatMoney, itemLineTotalTiyns, orderDueTiyns } from '../../utils/money';
 import { centerLabel } from '../../utils/centers';
 import { formatDateTime, formatElapsed } from '../../utils/time';
 import type { Product } from '../../types';
@@ -56,6 +58,7 @@ export function WaiterOrderPage() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [targetTableId, setTargetTableId] = useState<string | undefined>();
+  const [prepaidOpen, setPrepaidOpen] = useState(false);
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId],
@@ -349,6 +352,15 @@ export function WaiterOrderPage() {
         </Button>
         <Button
           size="large"
+          icon={<DollarOutlined />}
+          disabled={order?.status === 'PAID' || order?.status === 'CANCELLED'}
+          onClick={() => setPrepaidOpen(true)}
+          style={{ flex: '1 1 100px' }}
+        >
+          {t('waiter.prepaid')}
+        </Button>
+        <Button
+          size="large"
           icon={<SwapOutlined />}
           disabled={!transferableItems.length}
           onClick={() => {
@@ -514,12 +526,28 @@ export function WaiterOrderPage() {
             <Text type="secondary">{t('waiter.service')}</Text>
             <Text>{formatMoney(order?.serviceChargeTiyns || 0)}</Text>
           </Flex>
+          {(order?.prepaidTiyns || 0) > 0 && (
+            <Flex justify="space-between">
+              <Text type="secondary">{t('waiter.prepaid')}</Text>
+              <Text>−{formatMoney(order?.prepaidTiyns || 0)}</Text>
+            </Flex>
+          )}
           <Flex justify="space-between" align="center">
-            <Text strong>{t('payment.total')}</Text>
+            <Text strong>{t('waiter.due')}</Text>
             <Title level={3} style={{ margin: 0, color: '#1f6f5b' }}>
-              {formatMoney(order?.totalTiyns || 0)}
+              {formatMoney(orderDueTiyns(order || {}))}
             </Title>
           </Flex>
+          <Button
+            size="large"
+            icon={<DollarOutlined />}
+            block
+            disabled={order?.status === 'PAID' || order?.status === 'CANCELLED'}
+            onClick={() => setPrepaidOpen(true)}
+            style={{ marginTop: 8 }}
+          >
+            {t('waiter.prepaid')}
+          </Button>
           <Button
             size="large"
             icon={<PercentageOutlined />}
@@ -588,6 +616,11 @@ export function WaiterOrderPage() {
         open={discountOpen}
         orderId={orderId}
         onClose={() => setDiscountOpen(false)}
+      />
+      <SetPrepaidModal
+        open={prepaidOpen}
+        order={order}
+        onClose={() => setPrepaidOpen(false)}
       />
     </div>
   );

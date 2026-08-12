@@ -21,16 +21,11 @@ export function tiynsToTenge(tiyns: number): number {
   return Math.trunc(tiyns) / 100;
 }
 
-/** Line total for cart rows (API uses lineTotalTiyns). */
-export function itemLineTotalTiyns(item: {
-  lineTotalTiyns?: number;
+/** Remaining to pay after prepaid deposit. */
+export function orderDueTiyns(order: {
   totalTiyns?: number;
-  priceSnapshot?: number;
-  quantity?: number;
+  prepaidTiyns?: number;
 }): number {
-  if (Number.isFinite(item.lineTotalTiyns)) return Number(item.lineTotalTiyns);
-  if (Number.isFinite(item.totalTiyns)) return Number(item.totalTiyns);
-  const unit = Number(item.priceSnapshot) || 0;
-  const qty = Number(item.quantity) || 0;
-  return unit * qty;
+  return Math.max(0, Math.trunc(order.totalTiyns || 0) - Math.trunc(order.prepaidTiyns || 0));
 }
+
