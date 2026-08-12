@@ -118,7 +118,8 @@
     "selectTable": "Select table",
     "prepaid": "Prepayment",
     "prepaidHint": "Deposit the guest already left for the table. Final payment uses the remaining due.",
-    "due": "Due"
+    "due": "Due",
+    "shiftClosed": "Shift is closed — cannot open new tables or send orders. Open the shift at the POS."
   },
   "kitchen": {
     "title": "Kitchen / Bar",

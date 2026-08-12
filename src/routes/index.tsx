@@ -83,6 +83,10 @@ export function AppRouter() {
           }
         >
           <Route index element={<DashboardPage />} />
+          <Route path="floor" element={<WaiterHallPage />} />
+          <Route path="floor/orders/:orderId" element={<WaiterOrderPage />} />
+          <Route path="pos" element={<CashierPage />} />
+          <Route path="kitchen-view" element={<KitchenPage />} />
           <Route path="menu" element={<MenuPage />} />
           <Route path="halls" element={<HallsPage />} />
           <Route path="employees" element={<EmployeesPage />} />

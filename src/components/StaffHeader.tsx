@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { disconnectSocket } from '../websocket/socket';
 import { isAdminRole } from '../utils/roles';
+import { cashierHome, kitchenHome, waiterHome } from '../utils/paths';
 
 const { Text, Title } = Typography;
 
@@ -56,13 +57,13 @@ export function StaffHeader({ title, extra }: Props) {
       <Flex gap={8} align="center" wrap="wrap">
         {showFloorSwitch && (
           <>
-            <Button size="large" onClick={() => navigate('/waiter')}>
+            <Button size="large" onClick={() => navigate(waiterHome(user?.role))}>
               {t('waiter.title')}
             </Button>
-            <Button size="large" onClick={() => navigate('/cashier')}>
+            <Button size="large" onClick={() => navigate(cashierHome(user?.role))}>
               {t('cashier.title')}
             </Button>
-            <Button size="large" onClick={() => navigate('/kitchen')}>
+            <Button size="large" onClick={() => navigate(kitchenHome(user?.role))}>
               {t('kitchen.title')}
             </Button>
             <Button size="large" onClick={() => navigate('/admin')}>

@@ -20,7 +20,7 @@ import {
 } from 'antd';
 import { PercentageOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
 import { SetPrepaidModal } from '../../components/SetPrepaidModal';
 import { StaffHeader } from '../../components/StaffHeader';
@@ -28,6 +28,7 @@ import { ordersApi, paymentsApi, shiftsApi } from '../../api/endpoints';
 import { formatMoney, orderDueTiyns, tengeToTiyns, tiynsToTenge } from '../../utils/money';
 import { formatDateTime, formatElapsed } from '../../utils/time';
 import { canApplyDiscount } from '../../utils/roles';
+import { isAdminEmbeddedFloor } from '../../utils/paths';
 import { useAuthStore } from '../../stores/authStore';
 import type { Order, PaymentMethod } from '../../types';
 
@@ -36,7 +37,9 @@ const { Text, Title } = Typography;
 export function CashierPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const location = useLocation();
   const user = useAuthStore((s) => s.user);
+  const embedded = isAdminEmbeddedFloor(location.pathname);
   const allowDiscount = canApplyDiscount(user);
   const [params] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | undefined>(params.get('orderId') || undefined);
@@ -159,31 +162,57 @@ export function CashierPage() {
   const shiftOpen = Boolean(shift && shift.status === 'OPEN');
 
   return (
-    <div style={{ minHeight: '100vh', background: '#ebe4d8' }}>
-      <StaffHeader
-        title={t('cashier.title')}
-        extra={
-          <Space wrap>
-            {!shiftOpen ? (
-              <Button size="large" type="primary" onClick={() => { setCashAmount(0); setShiftModal('open'); }}>
-                {t('cashier.openShift')}
+    <div style={{ minHeight: embedded ? undefined : '100vh', background: '#ebe4d8' }}>
+      {!embedded && (
+        <StaffHeader
+          title={t('cashier.title')}
+          extra={
+            <Space wrap>
+              {!shiftOpen ? (
+                <Button size="large" type="primary" onClick={() => { setCashAmount(0); setShiftModal('open'); }}>
+                  {t('cashier.openShift')}
+                </Button>
+              ) : (
+                <>
+                  <Button size="large" onClick={() => { setCashAmount(0); setCashComment(''); setCashModal('in'); }}>
+                    {t('cashier.cashIn')}
+                  </Button>
+                  <Button size="large" onClick={() => { setCashAmount(0); setCashComment(''); setCashModal('out'); }}>
+                    {t('cashier.cashOut')}
+                  </Button>
+                  <Button size="large" onClick={() => { setCashAmount(0); setShiftModal('close'); }}>
+                    {t('cashier.closeShift')}
+                  </Button>
+                </>
+              )}
+            </Space>
+          }
+        />
+      )}
+      {embedded && (
+        <Space wrap style={{ marginBottom: 12 }}>
+          <Title level={3} style={{ margin: 0, fontFamily: 'Fraunces, serif', marginRight: 12 }}>
+            {t('cashier.title')}
+          </Title>
+          {!shiftOpen ? (
+            <Button size="large" type="primary" onClick={() => { setCashAmount(0); setShiftModal('open'); }}>
+              {t('cashier.openShift')}
+            </Button>
+          ) : (
+            <>
+              <Button size="large" onClick={() => { setCashAmount(0); setCashComment(''); setCashModal('in'); }}>
+                {t('cashier.cashIn')}
               </Button>
-            ) : (
-              <>
-                <Button size="large" onClick={() => { setCashAmount(0); setCashComment(''); setCashModal('in'); }}>
-                  {t('cashier.cashIn')}
-                </Button>
-                <Button size="large" onClick={() => { setCashAmount(0); setCashComment(''); setCashModal('out'); }}>
-                  {t('cashier.cashOut')}
-                </Button>
-                <Button size="large" onClick={() => { setCashAmount(0); setShiftModal('close'); }}>
-                  {t('cashier.closeShift')}
-                </Button>
-              </>
-            )}
-          </Space>
-        }
-      />
+              <Button size="large" onClick={() => { setCashAmount(0); setCashComment(''); setCashModal('out'); }}>
+                {t('cashier.cashOut')}
+              </Button>
+              <Button size="large" onClick={() => { setCashAmount(0); setShiftModal('close'); }}>
+                {t('cashier.closeShift')}
+              </Button>
+            </>
+          )}
+        </Space>
+      )}
 
       <div style={{ padding: 16 }}>
         {!shiftOpen && (

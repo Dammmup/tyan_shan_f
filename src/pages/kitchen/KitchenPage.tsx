@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Col, Empty, Flex, Row, Segmented, Spin, Tag, Typography, message } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { StaffHeader } from '../../components/StaffHeader';
 import { kitchenApi } from '../../api/endpoints';
 import { connectSocket, joinKitchenRoom } from '../../websocket/socket';
 import { useAuthStore } from '../../stores/authStore';
 import { centerLabel } from '../../utils/centers';
 import { formatDateTime, formatElapsed } from '../../utils/time';
+import { isAdminEmbeddedFloor } from '../../utils/paths';
 import type { KitchenOrder, KitchenStatus, ProductionCenter } from '../../types';
 
 const { Text, Title } = Typography;
@@ -90,6 +92,8 @@ function Ticket({
 export function KitchenPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const embedded = isAdminEmbeddedFloor(location.pathname);
   const restaurantId = useAuthStore((s) => s.restaurantId);
   const role = useAuthStore((s) => s.user?.role);
   const roleLockedCenter: ProductionCenter | null =
@@ -180,9 +184,14 @@ export function KitchenPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#ebe4d8' }}>
-      <StaffHeader title={t('kitchen.title')} />
-      <div style={{ padding: 12 }}>
+    <div style={{ minHeight: embedded ? undefined : '100vh', background: '#ebe4d8' }}>
+      {!embedded && <StaffHeader title={t('kitchen.title')} />}
+      {embedded && (
+        <Title level={3} style={{ marginTop: 0, fontFamily: 'Fraunces, serif' }}>
+          {t('kitchen.title')}
+        </Title>
+      )}
+      <div style={{ padding: embedded ? 0 : 12 }}>
         {filterOptions.length > 1 && (
           <div style={{ overflowX: 'auto', marginBottom: 12 }}>
             <Segmented

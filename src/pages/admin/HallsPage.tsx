@@ -25,6 +25,8 @@ import { useNavigate } from 'react-router-dom';
 import { hallsApi, ordersApi, tablesApi } from '../../api/endpoints';
 import type { Hall, Table as HallTable } from '../../types';
 import { TABLE_STATUS_COLORS } from '../../utils/roles';
+import { waiterHome, waiterOrderPath } from '../../utils/paths';
+import { useAuthStore } from '../../stores/authStore';
 
 type HallForm = { name: string; sortOrder: number };
 type TableForm = { name: string; seats: number };
@@ -32,6 +34,7 @@ type TableForm = { name: string; seats: number };
 export function HallsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   const [hallId, setHallId] = useState<string | undefined>();
   const [hallModal, setHallModal] = useState(false);
@@ -244,18 +247,18 @@ export function HallsPage() {
                             void (async () => {
                               try {
                                 if (table.currentOrderId) {
-                                  navigate(`/waiter/orders/${table.currentOrderId}`);
+                                  navigate(waiterOrderPath(table.currentOrderId, user?.role));
                                   return;
                                 }
                                 const order = await ordersApi.byTable(table._id);
                                 if (order?._id) {
-                                  navigate(`/waiter/orders/${order._id}`);
+                                  navigate(waiterOrderPath(order._id, user?.role));
                                   return;
                                 }
                               } catch {
                                 // fall through to hall view
                               }
-                              navigate('/waiter');
+                              navigate(waiterHome(user?.role));
                             })();
                           }}
                         >

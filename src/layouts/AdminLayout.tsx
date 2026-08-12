@@ -45,9 +45,9 @@ export function AdminLayout() {
   const items = useMemo(
     () => [
       { key: '/admin', label: t('admin.dashboard'), icon: IconLayoutDashboard },
-      { key: '/waiter', label: t('waiter.title'), icon: IconSofa, external: true },
-      { key: '/cashier', label: t('cashier.title'), icon: IconCash, external: true },
-      { key: '/kitchen', label: t('kitchen.title'), icon: IconToolsKitchen2, external: true },
+      { key: '/admin/floor', label: t('waiter.title'), icon: IconSofa },
+      { key: '/admin/pos', label: t('cashier.title'), icon: IconCash },
+      { key: '/admin/kitchen-view', label: t('kitchen.title'), icon: IconToolsKitchen2 },
       { key: '/admin/menu', label: t('admin.menu'), icon: IconToolsKitchen2 },
       { key: '/admin/halls', label: t('admin.halls'), icon: IconBuildingStore },
       { key: '/admin/employees', label: t('admin.employees'), icon: IconUsers },

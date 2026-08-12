@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { ordersApi, reportsApi } from '../../api/endpoints';
 import { formatMoney } from '../../utils/money';
 import { formatElapsed } from '../../utils/time';
+import { waiterHome, waiterOrderPath } from '../../utils/paths';
+import { useAuthStore } from '../../stores/authStore';
 
 const { Title, Text } = Typography;
 
@@ -30,6 +32,7 @@ function StatTile({ label, value }: { label: string; value: string }) {
 export function DashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: reportsApi.dashboard,
@@ -82,7 +85,7 @@ export function DashboardPage() {
                 <Button
                   key="open"
                   type="primary"
-                  onClick={() => navigate(`/waiter/orders/${order._id}`)}
+                  onClick={() => navigate(waiterOrderPath(order._id, user?.role))}
                 >
                   {t('waiter.openOrder')}
                 </Button>,
@@ -95,7 +98,7 @@ export function DashboardPage() {
             </List.Item>
           )}
         />
-        <Button size="large" style={{ marginTop: 8 }} onClick={() => navigate('/waiter')}>
+        <Button size="large" style={{ marginTop: 8 }} onClick={() => navigate(waiterHome(user?.role))}>
           {t('waiter.title')}
         </Button>
       </div>

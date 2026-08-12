@@ -30,7 +30,7 @@ import {
   WalletOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
 import { SetPrepaidModal } from '../../components/SetPrepaidModal';
 import { StaffHeader } from '../../components/StaffHeader';
@@ -44,6 +44,12 @@ import {
   canCancelWholeOrder,
   isElevatedFloor,
 } from '../../utils/roles';
+import {
+  cashierHome,
+  isAdminEmbeddedFloor,
+  waiterHome,
+  waiterOrderPath,
+} from '../../utils/paths';
 import { useAuthStore } from '../../stores/authStore';
 import type { Product } from '../../types';
 
@@ -55,8 +61,10 @@ export function WaiterOrderPage() {
   const { orderId = '' } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
+  const embedded = isAdminEmbeddedFloor(location.pathname);
   const allowDiscount = canApplyDiscount(user);
   const elevated = isElevatedFloor(user?.role);
   const [categoryId, setCategoryId] = useState<string | undefined>();
@@ -151,7 +159,7 @@ export function WaiterOrderPage() {
       message.success(t('app.success'));
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
       await queryClient.invalidateQueries({ queryKey: ['tables'] });
-      navigate('/waiter');
+      navigate(waiterHome(user?.role));
     },
     onError: () => message.error(t('app.error')),
   });
@@ -171,7 +179,7 @@ export function WaiterOrderPage() {
       await queryClient.invalidateQueries({ queryKey: ['tables'] });
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
       await queryClient.invalidateQueries({ queryKey: ['kitchen'] });
-      navigate(`/waiter/orders/${res.target._id}`);
+      navigate(waiterOrderPath(res.target._id, user?.role));
     },
     onError: () => message.error(t('app.error')),
   });
@@ -216,10 +224,49 @@ export function WaiterOrderPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#ebe4d8', paddingBottom: 88 }}>
-      <StaffHeader
-        title={`${t('waiter.order')} #${order?.number ?? orderId.slice(-4)}`}
-        extra={
+    <div style={{ minHeight: embedded ? undefined : '100vh', background: '#ebe4d8', paddingBottom: 88 }}>
+      {!embedded ? (
+        <StaffHeader
+          title={`${t('waiter.order')} #${order?.number ?? orderId.slice(-4)}`}
+          extra={
+            <Space>
+              {order?.status !== 'PAID' &&
+                order?.status !== 'CANCELLED' &&
+                canCancelWholeOrder(user, order?.items || []) && (
+                <Button
+                  danger
+                  icon={<StopOutlined />}
+                  size="large"
+                  loading={cancelOrderMutation.isPending}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: t('waiter.cancelOrder'),
+                      content: t('waiter.cancelOrderHint'),
+                      okText: t('app.confirm'),
+                      cancelText: t('app.cancel'),
+                      okButtonProps: { danger: true },
+                      onOk: () => cancelOrderMutation.mutateAsync(),
+                    });
+                  }}
+                >
+                  {t('waiter.cancelOrder')}
+                </Button>
+              )}
+              <Button
+                icon={<ArrowLeftOutlined />}
+                size="large"
+                onClick={() => navigate(waiterHome(user?.role))}
+              >
+                {t('app.back')}
+              </Button>
+            </Space>
+          }
+        />
+      ) : (
+        <Flex justify="space-between" align="center" wrap="wrap" gap={8} style={{ marginBottom: 8 }}>
+          <Typography.Title level={4} style={{ margin: 0, fontFamily: 'Fraunces, serif' }}>
+            {`${t('waiter.order')} #${order?.number ?? orderId.slice(-4)}`}
+          </Typography.Title>
           <Space>
             {order?.status !== 'PAID' &&
               order?.status !== 'CANCELLED' &&
@@ -246,15 +293,15 @@ export function WaiterOrderPage() {
             <Button
               icon={<ArrowLeftOutlined />}
               size="large"
-              onClick={() => navigate('/waiter')}
+              onClick={() => navigate(waiterHome(user?.role))}
             >
               {t('app.back')}
             </Button>
           </Space>
-        }
-      />
+        </Flex>
+      )}
 
-      <div style={{ padding: 12 }}>
+      <div style={{ padding: embedded ? 0 : 12 }}>
         <Text type="secondary">
           {order?.tableName} · {t(`orderStatus.${order?.status || 'OPEN'}`)}
           {order?.createdAt
@@ -390,7 +437,7 @@ export function WaiterOrderPage() {
         <Button
           size="large"
           icon={<WalletOutlined />}
-          onClick={() => navigate(`/cashier?orderId=${orderId}`)}
+          onClick={() => navigate(`${cashierHome(user?.role)}?orderId=${orderId}`)}
           style={{ flex: '1 1 100px' }}
         >
           {t('waiter.payLink')}

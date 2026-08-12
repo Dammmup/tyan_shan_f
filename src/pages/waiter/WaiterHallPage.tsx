@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Alert,
+  Button,
   Flex,
   InputNumber,
   Modal,
@@ -10,10 +12,11 @@ import {
   message,
 } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { StaffHeader } from '../../components/StaffHeader';
-import { hallsApi, ordersApi, tablesApi } from '../../api/endpoints';
+import { hallsApi, ordersApi, shiftsApi, tablesApi } from '../../api/endpoints';
 import { TABLE_STATUS_COLORS } from '../../utils/roles';
+import { cashierHome, isAdminEmbeddedFloor, waiterOrderPath } from '../../utils/paths';
 import { formatDateTime, formatElapsed } from '../../utils/time';
 import { connectSocket, joinRestaurantRoom } from '../../websocket/socket';
 import { useAuthStore } from '../../stores/authStore';
@@ -33,8 +36,11 @@ function idOf(value: unknown): string {
 export function WaiterHallPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
   const restaurantId = useAuthStore((s) => s.restaurantId || s.user?.restaurantId);
+  const embedded = isAdminEmbeddedFloor(location.pathname);
   const [hallId, setHallId] = useState<string | undefined>();
   const [createFor, setCreateFor] = useState<Table | null>(null);
   const [guests, setGuests] = useState(2);
@@ -46,6 +52,7 @@ export function WaiterHallPage() {
     const refresh = () => {
       void queryClient.invalidateQueries({ queryKey: ['tables'] });
       void queryClient.invalidateQueries({ queryKey: ['orders'] });
+      void queryClient.invalidateQueries({ queryKey: ['shift'] });
     };
     s.on('TABLE_UPDATED', refresh);
     s.on('ORDER_UPDATED', refresh);
@@ -53,6 +60,8 @@ export function WaiterHallPage() {
     s.on('PAYMENT_CREATED', refresh);
     s.on('ORDER_CANCELLED', refresh);
     s.on('ORDER_PAID', refresh);
+    s.on('SHIFT_OPENED', refresh);
+    s.on('SHIFT_CLOSED', refresh);
     return () => {
       s.off('TABLE_UPDATED', refresh);
       s.off('ORDER_UPDATED', refresh);
@@ -60,8 +69,17 @@ export function WaiterHallPage() {
       s.off('PAYMENT_CREATED', refresh);
       s.off('ORDER_CANCELLED', refresh);
       s.off('ORDER_PAID', refresh);
+      s.off('SHIFT_OPENED', refresh);
+      s.off('SHIFT_CLOSED', refresh);
     };
   }, [restaurantId, queryClient]);
+
+  const shiftQuery = useQuery({
+    queryKey: ['shift', 'current'],
+    queryFn: shiftsApi.current,
+    refetchInterval: 20000,
+  });
+  const shiftOpen = Boolean(shiftQuery.data && shiftQuery.data.status === 'OPEN');
 
   const hallsQuery = useQuery({
     queryKey: ['halls'],
@@ -99,6 +117,10 @@ export function WaiterHallPage() {
     [hallsQuery.data],
   );
 
+  const goOrder = (orderId: string) => {
+    navigate(waiterOrderPath(orderId, user?.role));
+  };
+
   const resolveOrderId = (table: Table): string | undefined => {
     const fromMap = orderByTableId.get(idOf(table._id));
     if (fromMap?._id) return idOf(fromMap._id);
@@ -110,12 +132,11 @@ export function WaiterHallPage() {
     if (table.status === 'DISABLED') return;
     setBusy(true);
     try {
-      // Always resolve open order by table (owner/admin/waiter share same path).
       try {
         const byTable = await ordersApi.byTable(table._id);
         const oid = idOf(byTable?._id);
         if (oid) {
-          navigate(`/waiter/orders/${oid}`);
+          goOrder(oid);
           return;
         }
       } catch {
@@ -124,7 +145,12 @@ export function WaiterHallPage() {
 
       const knownOrderId = resolveOrderId(table);
       if (knownOrderId) {
-        navigate(`/waiter/orders/${knownOrderId}`);
+        goOrder(knownOrderId);
+        return;
+      }
+
+      if (!shiftOpen) {
+        message.warning(t('waiter.shiftClosed'));
         return;
       }
 
@@ -133,14 +159,18 @@ export function WaiterHallPage() {
           tableId: table._id,
           guests: table.capacity || table.seats || 2,
         });
-        navigate(`/waiter/orders/${idOf(order._id)}`);
+        goOrder(idOf(order._id));
         return;
       }
 
       setCreateFor(table);
       setGuests(table.capacity || table.seats || 2);
-    } catch {
-      message.error(t('app.error'));
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string | string[] } } })?.response?.data
+          ?.message;
+      const text = Array.isArray(msg) ? msg.join(', ') : msg;
+      message.error(text || t('app.error'));
     } finally {
       setBusy(false);
     }
@@ -148,6 +178,10 @@ export function WaiterHallPage() {
 
   const createOrder = async () => {
     if (!createFor) return;
+    if (!shiftOpen) {
+      message.warning(t('waiter.shiftClosed'));
+      return;
+    }
     setBusy(true);
     try {
       const order = await ordersApi.create({ tableId: createFor._id, guests });
@@ -155,30 +189,65 @@ export function WaiterHallPage() {
       setCreateFor(null);
       await queryClient.invalidateQueries({ queryKey: ['tables'] });
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
-      navigate(`/waiter/orders/${order._id}`);
-    } catch {
-      message.error(t('app.error'));
+      goOrder(idOf(order._id));
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string | string[] } } })?.response?.data
+          ?.message;
+      const text = Array.isArray(msg) ? msg.join(', ') : msg;
+      message.error(text || t('app.error'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#ebe4d8' }}>
-      <StaffHeader
-        title={t('waiter.title')}
-        extra={
-          <Select
-            style={{ minWidth: 160 }}
-            options={hallOptions}
-            value={activeHallId}
-            onChange={setHallId}
-            size="large"
-          />
-        }
-      />
+    <div style={{ minHeight: embedded ? undefined : '100vh', background: '#ebe4d8' }}>
+      {!embedded && (
+        <StaffHeader
+          title={t('waiter.title')}
+          extra={
+            <Select
+              style={{ minWidth: 160 }}
+              options={hallOptions}
+              value={activeHallId}
+              onChange={setHallId}
+              size="large"
+            />
+          }
+        />
+      )}
 
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: embedded ? 0 : 16 }}>
+        {embedded && (
+          <Flex justify="space-between" align="center" wrap="wrap" gap={12} style={{ marginBottom: 12 }}>
+            <Typography.Title level={3} style={{ margin: 0, fontFamily: 'Fraunces, serif' }}>
+              {t('waiter.title')}
+            </Typography.Title>
+            <Select
+              style={{ minWidth: 160 }}
+              options={hallOptions}
+              value={activeHallId}
+              onChange={setHallId}
+              size="large"
+            />
+          </Flex>
+        )}
+
+        {!shiftOpen && !shiftQuery.isLoading && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message={t('waiter.shiftClosed')}
+            action={
+              <Button size="small" type="primary" onClick={() => navigate(cashierHome(user?.role))}>
+                {t('cashier.openShift')}
+              </Button>
+            }
+          />
+        )}
+
         {(hallsQuery.isLoading || tablesQuery.isLoading) && (
           <Flex justify="center" style={{ padding: 48 }}>
             <Spin size="large" />
