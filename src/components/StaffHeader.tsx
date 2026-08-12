@@ -32,10 +32,15 @@ export function StaffHeader({ title, extra }: Props) {
       wrap="wrap"
       gap={12}
       style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 110,
         padding: '12px 16px',
+        paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))',
         background: 'linear-gradient(120deg, #143d34 0%, #1f6f5b 55%, #2a5548 100%)',
         color: '#f7f3ea',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
+        maxWidth: '100vw',
       }}
     >
       <div>

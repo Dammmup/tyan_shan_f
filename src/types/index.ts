@@ -141,7 +141,10 @@ export interface OrderItem {
   quantity: number;
   status: OrderItemStatus;
   modifiers?: OrderItemModifier[];
-  totalTiyns: number;
+  /** Line total in tiyns (API field). */
+  lineTotalTiyns?: number;
+  /** Legacy alias — prefer lineTotalTiyns. */
+  totalTiyns?: number;
   note?: string;
 }
 

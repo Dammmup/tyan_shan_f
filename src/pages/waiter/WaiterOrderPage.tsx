@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StaffHeader } from '../../components/StaffHeader';
 import { menuApi, ordersApi } from '../../api/endpoints';
-import { formatMoney } from '../../utils/money';
+import { formatMoney, itemLineTotalTiyns } from '../../utils/money';
 import type { Product } from '../../types';
 
 const { Text, Title } = Typography;
@@ -183,7 +183,7 @@ export function WaiterOrderPage() {
               >
                 <div style={{ fontWeight: 700 }}>{p.name}</div>
                 <div style={{ marginTop: 8, color: '#1f6f5b', fontWeight: 600 }}>
-                  {formatMoney(p.priceTiyns)}
+                  {formatMoney(p.priceTiyns ?? p.basePriceTiyns ?? 0)}
                 </div>
                 {stopped && <Tag color="red">{t('waiter.stopped')}</Tag>}
               </button>
@@ -193,15 +193,18 @@ export function WaiterOrderPage() {
       </div>
 
       <div
+        className="staff-bottom-bar"
         style={{
           position: 'fixed',
           left: 0,
           right: 0,
           bottom: 0,
+          zIndex: 100,
           padding: 12,
           background: 'rgba(20,61,52,0.95)',
           display: 'flex',
           gap: 8,
+          maxWidth: '100vw',
         }}
       >
         <Button size="large" block onClick={() => setCartOpen(true)}>
@@ -291,7 +294,7 @@ export function WaiterOrderPage() {
             >
               <List.Item.Meta
                 title={`${item.quantity}× ${item.nameSnapshot}`}
-                description={formatMoney(item.totalTiyns)}
+                description={formatMoney(itemLineTotalTiyns(item))}
               />
             </List.Item>
           )}
@@ -307,7 +310,7 @@ export function WaiterOrderPage() {
                 description={
                   <Space>
                     <Tag>{item.status}</Tag>
-                    <span>{formatMoney(item.totalTiyns)}</span>
+                    <span>{formatMoney(itemLineTotalTiyns(item))}</span>
                   </Space>
                 }
               />
