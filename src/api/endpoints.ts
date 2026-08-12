@@ -7,6 +7,8 @@ import type {
   Hall,
   KitchenOrder,
   KitchenStatus,
+  Modifier,
+  ModifierGroup,
   Order,
   PaymentMethod,
   PaymentSplit,
@@ -53,6 +55,34 @@ export const menuApi = {
   removeProduct: (id: string) => api.delete(`/menu/products/${id}`),
   setStopList: (id: string, availability: ProductAvailability) =>
     api.patch<Product>(`/menu/products/${id}/stop-list`, { availability }).then((r) => r.data),
+  modifierGroups: () =>
+    api.get<ModifierGroup[]>('/menu/modifier-groups').then((r) => r.data),
+  createModifierGroup: (body: {
+    name: string;
+    required?: boolean;
+    minSelect?: number;
+    maxSelect?: number;
+  }) => api.post<ModifierGroup>('/menu/modifier-groups', body).then((r) => r.data),
+  updateModifierGroup: (
+    id: string,
+    body: Partial<{
+      name: string;
+      required: boolean;
+      minSelect: number;
+      maxSelect: number;
+      isActive: boolean;
+    }>,
+  ) => api.patch<ModifierGroup>(`/menu/modifier-groups/${id}`, body).then((r) => r.data),
+  removeModifierGroup: (id: string) => api.delete(`/menu/modifier-groups/${id}`),
+  modifiers: (groupId?: string) =>
+    api.get<Modifier[]>('/menu/modifiers', { params: { groupId } }).then((r) => r.data),
+  createModifier: (body: { name: string; groupId: string; priceTiyns: number }) =>
+    api.post<Modifier>('/menu/modifiers', body).then((r) => r.data),
+  updateModifier: (
+    id: string,
+    body: Partial<{ name: string; priceTiyns: number; isActive: boolean }>,
+  ) => api.patch<Modifier>(`/menu/modifiers/${id}`, body).then((r) => r.data),
+  removeModifier: (id: string) => api.delete(`/menu/modifiers/${id}`),
 };
 
 export const ordersApi = {
@@ -99,6 +129,8 @@ export const ordersApi = {
     ),
   removeItem: (orderId: string, itemId: string) =>
     api.delete(`/orders/${orderId}/items/${itemId}`).then(async () => ordersApi.get(orderId)),
+  cancel: (orderId: string) =>
+    api.post(`/orders/${orderId}/cancel`).then(async () => ordersApi.get(orderId)),
   sendSuborder: (orderId: string, itemIds?: string[]) =>
     api.post(`/orders/${orderId}/suborders`, { itemIds }).then(async () => ordersApi.get(orderId)),
   precheck: (orderId: string) =>
@@ -139,6 +171,8 @@ export const paymentsApi = {
 
 export const shiftsApi = {
   current: () => api.get<Shift | null>('/shifts/current').then((r) => r.data),
+  list: (limit = 20) =>
+    api.get<Shift[]>('/shifts', { params: { limit } }).then((r) => r.data),
   open: (openingCashTiyns: number) =>
     api.post<Shift>('/shifts/open', { openingCashTiyns }).then((r) => r.data),
   close: async (closingCashTiyns: number) => {
@@ -258,6 +292,18 @@ export const reportsApi = {
           amountTiyns: row.amountTiyns,
         })),
       ),
+  shift: (id: string) =>
+    api
+      .get<{
+        shift: Shift;
+        paymentsCount: number;
+        paymentsTotalTiyns: number;
+        ordersCount: number;
+        paidOrders: number;
+        cancelledOrders?: number;
+        byMethod?: Record<string, { count: number; amountTiyns: number }>;
+      } | null>(`/reports/shifts/${id}`)
+      .then((r) => r.data),
 };
 
 export const auditApi = {

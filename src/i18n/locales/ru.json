@@ -101,7 +101,9 @@
     "discount": "Скидка",
     "applyDiscount": "Применить скидку",
     "applyDiscountHint": "Выберите скидку из списка. Итог пересчитается с обслуживанием.",
-    "selectDiscount": "Выберите скидку"
+    "selectDiscount": "Выберите скидку",
+    "cancelOrder": "Отменить заказ",
+    "cancelOrderHint": "Заказ и тикеты кухни будут отменены, стол освободится."
   },
   "kitchen": {
     "title": "Кухня / Бар",
@@ -164,7 +166,14 @@
     "cafeName": "Название",
     "address": "Адрес",
     "timezone": "Часовой пояс",
-    "servicePercent": "Обслуживание, %"
+    "servicePercent": "Обслуживание, %",
+    "modifiers": "Модификаторы",
+    "modifierGroups": "Группы модификаторов",
+    "description": "Описание",
+    "reportShifts": "По сменам",
+    "shiftReport": "Отчёт смены",
+    "openedAt": "Открыта",
+    "selectShift": "Выберите смену в таблице"
   },
   "availability": {
     "AVAILABLE": "Доступно",

@@ -22,6 +22,7 @@ import {
   PercentageOutlined,
   PlusOutlined,
   SendOutlined,
+  StopOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -115,6 +116,17 @@ export function WaiterOrderPage() {
     onError: () => message.error(t('app.error')),
   });
 
+  const cancelOrderMutation = useMutation({
+    mutationFn: () => ordersApi.cancel(orderId),
+    onSuccess: async () => {
+      message.success(t('app.success'));
+      await queryClient.invalidateQueries({ queryKey: ['orders'] });
+      await queryClient.invalidateQueries({ queryKey: ['tables'] });
+      navigate('/waiter');
+    },
+    onError: () => message.error(t('app.error')),
+  });
+
   const order = orderQuery.data;
   const newItems = useMemo(
     () => (order?.items || []).filter((i) => i.status === 'NEW'),
@@ -138,13 +150,35 @@ export function WaiterOrderPage() {
       <StaffHeader
         title={`${t('waiter.order')} #${order?.number ?? orderId.slice(-4)}`}
         extra={
-          <Button
-            icon={<ArrowLeftOutlined />}
-            size="large"
-            onClick={() => navigate('/waiter')}
-          >
-            {t('app.back')}
-          </Button>
+          <Space>
+            {order?.status !== 'PAID' && order?.status !== 'CANCELLED' && (
+              <Button
+                danger
+                icon={<StopOutlined />}
+                size="large"
+                loading={cancelOrderMutation.isPending}
+                onClick={() => {
+                  Modal.confirm({
+                    title: t('waiter.cancelOrder'),
+                    content: t('waiter.cancelOrderHint'),
+                    okText: t('app.confirm'),
+                    cancelText: t('app.cancel'),
+                    okButtonProps: { danger: true },
+                    onOk: () => cancelOrderMutation.mutateAsync(),
+                  });
+                }}
+              >
+                {t('waiter.cancelOrder')}
+              </Button>
+            )}
+            <Button
+              icon={<ArrowLeftOutlined />}
+              size="large"
+              onClick={() => navigate('/waiter')}
+            >
+              {t('app.back')}
+            </Button>
+          </Space>
         }
       />
 

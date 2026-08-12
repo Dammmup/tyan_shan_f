@@ -101,7 +101,9 @@
     "discount": "Жеңілдік",
     "applyDiscount": "Жеңілдік қолдану",
     "applyDiscountHint": "Тізімнен жеңілдік таңдаңыз. Қорытынды қызметпен қайта есептеледі.",
-    "selectDiscount": "Жеңілдікті таңдаңыз"
+    "selectDiscount": "Жеңілдікті таңдаңыз",
+    "cancelOrder": "Тапсырысты болдырмау",
+    "cancelOrderHint": "Тапсырыс пен ас үй тикеттері жойылады, үстел босатылады."
   },
   "kitchen": {
     "title": "Ас үй / Бар",
@@ -164,7 +166,14 @@
     "cafeName": "Атауы",
     "address": "Мекенжай",
     "timezone": "Уақыт белдеуі",
-    "servicePercent": "Қызмет, %"
+    "servicePercent": "Қызмет, %",
+    "modifiers": "Модификаторлар",
+    "modifierGroups": "Модификатор топтары",
+    "description": "Сипаттама",
+    "reportShifts": "Ауысымдар бойынша",
+    "shiftReport": "Ауысым есебі",
+    "openedAt": "Ашылған",
+    "selectShift": "Кестеден ауысымды таңдаңыз"
   },
   "availability": {
     "AVAILABLE": "Қолжетімді",

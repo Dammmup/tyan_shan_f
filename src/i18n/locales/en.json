@@ -101,7 +101,9 @@
     "discount": "Discount",
     "applyDiscount": "Apply discount",
     "applyDiscountHint": "Pick a discount. Total will be recalculated with service charge.",
-    "selectDiscount": "Select discount"
+    "selectDiscount": "Select discount",
+    "cancelOrder": "Cancel order",
+    "cancelOrderHint": "Order and kitchen tickets will be cancelled, table freed."
   },
   "kitchen": {
     "title": "Kitchen / Bar",
@@ -164,7 +166,14 @@
     "cafeName": "Name",
     "address": "Address",
     "timezone": "Timezone",
-    "servicePercent": "Service charge %"
+    "servicePercent": "Service charge %",
+    "modifiers": "Modifiers",
+    "modifierGroups": "Modifier groups",
+    "description": "Description",
+    "reportShifts": "By shifts",
+    "shiftReport": "Shift report",
+    "openedAt": "Opened",
+    "selectShift": "Select a shift in the table"
   },
   "availability": {
     "AVAILABLE": "Available",

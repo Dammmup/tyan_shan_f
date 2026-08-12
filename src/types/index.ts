@@ -97,6 +97,7 @@ export interface Category {
 export interface Modifier {
   _id: string;
   name: string;
+  groupId?: string;
   priceTiyns: number;
   isActive?: boolean;
 }
@@ -106,6 +107,7 @@ export interface ModifierGroup {
   name: string;
   minSelect?: number;
   maxSelect?: number;
+  required?: boolean;
   modifiers: Modifier[];
 }
 
@@ -131,6 +133,7 @@ export interface Product {
   productionCenter: ProductionCenter;
   description?: string;
   isActive?: boolean;
+  modifierGroupIds?: string[];
   modifierGroups?: ModifierGroup[];
 }
 

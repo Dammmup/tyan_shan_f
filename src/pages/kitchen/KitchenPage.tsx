@@ -91,8 +91,17 @@ export function KitchenPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const restaurantId = useAuthStore((s) => s.restaurantId);
-  const [centerFilter, setCenterFilter] = useState<'ALL' | ProductionCenter>('ALL');
+  const role = useAuthStore((s) => s.user?.role);
+  const roleLockedCenter: ProductionCenter | null =
+    role === 'BAR' ? 'BAR' : role === 'KITCHEN' ? 'KITCHEN' : null;
+  const [centerFilter, setCenterFilter] = useState<'ALL' | ProductionCenter>(
+    roleLockedCenter || 'ALL',
+  );
   const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (roleLockedCenter) setCenterFilter(roleLockedCenter);
+  }, [roleLockedCenter]);
 
   useEffect(() => {
     const id = window.setInterval(() => setTick((n) => n + 1), 30_000);
@@ -141,11 +150,27 @@ export function KitchenPage() {
     onError: () => message.error(t('app.error')),
   });
 
+  const filterOptions = useMemo(() => {
+    if (role === 'BAR') {
+      return [{ value: 'BAR' as const, label: 'Бар' }];
+    }
+    if (role === 'KITCHEN') {
+      return CENTER_FILTERS.filter((f) => f.value !== 'BAR');
+    }
+    return CENTER_FILTERS;
+  }, [role]);
+
   const filtered = useMemo(() => {
     const all = listQuery.data || [];
+    if (role === 'BAR') return all.filter((o) => o.productionCenter === 'BAR');
+    if (role === 'KITCHEN') {
+      const kitchenSet = all.filter((o) => o.productionCenter !== 'BAR');
+      if (centerFilter === 'ALL') return kitchenSet;
+      return kitchenSet.filter((o) => o.productionCenter === centerFilter);
+    }
     if (centerFilter === 'ALL') return all;
     return all.filter((o) => o.productionCenter === centerFilter);
-  }, [listQuery.data, centerFilter]);
+  }, [listQuery.data, centerFilter, role]);
 
   const byStatus = (status: KitchenStatus) => {
     if (status === 'COOKING') {
@@ -158,14 +183,16 @@ export function KitchenPage() {
     <div style={{ minHeight: '100vh', background: '#ebe4d8' }}>
       <StaffHeader title={t('kitchen.title')} />
       <div style={{ padding: 12 }}>
-        <div style={{ overflowX: 'auto', marginBottom: 12 }}>
-          <Segmented
-            value={centerFilter}
-            onChange={(v) => setCenterFilter(v as 'ALL' | ProductionCenter)}
-            options={CENTER_FILTERS}
-            size="large"
-          />
-        </div>
+        {filterOptions.length > 1 && (
+          <div style={{ overflowX: 'auto', marginBottom: 12 }}>
+            <Segmented
+              value={centerFilter}
+              onChange={(v) => setCenterFilter(v as 'ALL' | ProductionCenter)}
+              options={filterOptions}
+              size="large"
+            />
+          </div>
+        )}
         {listQuery.isLoading ? (
           <Flex justify="center" style={{ padding: 48 }}>
             <Spin size="large" />
