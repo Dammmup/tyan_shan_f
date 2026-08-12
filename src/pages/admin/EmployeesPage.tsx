@@ -7,7 +7,6 @@ import {
   Group,
   Modal,
   Paper,
-  PasswordInput,
   Select,
   Stack,
   Table,
@@ -208,8 +207,8 @@ export function EmployeesPage() {
                     </Badge>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={emp.hasPin ? 'teal' : 'gray'} variant="outline">
-                      PIN {emp.hasPin ? '✓' : '—'}
+                    <Badge color={emp.hasPin ? 'teal' : 'orange'} variant="light">
+                      {emp.hasPin ? t('admin.pinSet') : t('admin.pinMissing')}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
@@ -257,14 +256,18 @@ export function EmployeesPage() {
               searchable
               {...form.getInputProps('roleId')}
             />
-            <PasswordInput
+            <TextInput
               label="PIN"
               description={
                 editing
-                  ? 'Оставьте пустым, чтобы не менять. Минимум 4 цифры.'
-                  : 'Для быстрого входа официанта/кассы. Минимум 4 цифры.'
+                  ? editing.hasPin
+                    ? t('admin.pinEditHintSet')
+                    : t('admin.pinEditHintMissing')
+                  : t('admin.pinCreateHint')
               }
+              placeholder="1111"
               inputMode="numeric"
+              autoComplete="off"
               {...form.getInputProps('pin')}
             />
             <Button type="submit" loading={saveMutation.isPending}>

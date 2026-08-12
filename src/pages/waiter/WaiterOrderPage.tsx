@@ -37,6 +37,13 @@ import { menuApi, ordersApi, tablesApi } from '../../api/endpoints';
 import { formatMoney, itemLineTotalTiyns, orderDueTiyns } from '../../utils/money';
 import { centerLabel } from '../../utils/centers';
 import { formatDateTime, formatElapsed } from '../../utils/time';
+import {
+  canApplyDiscount,
+  canCancelOrderItem,
+  canCancelWholeOrder,
+  isElevatedFloor,
+} from '../../utils/roles';
+import { useAuthStore } from '../../stores/authStore';
 import type { Product } from '../../types';
 
 const { Text, Title } = Typography;
@@ -48,7 +55,9 @@ export function WaiterOrderPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
+  const user = useAuthStore((s) => s.user);
+  const allowDiscount = canApplyDiscount(user);
+  const elevated = isElevatedFloor(user?.role);
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [product, setProduct] = useState<Product | null>(null);
   const [qty, setQty] = useState(1);
@@ -177,16 +186,16 @@ export function WaiterOrderPage() {
     [order],
   );
 
-  const tableOptions = useMemo(
-    () =>
-      (tablesQuery.data || [])
-        .filter((tbl) => tbl._id !== order?.tableId && tbl.status !== 'DISABLED')
-        .map((tbl) => ({
-          value: tbl._id,
-          label: `${tbl.name}${tbl.status === 'OCCUPIED' ? ` (${t('tableStatus.OCCUPIED')})` : ''}`,
-        })),
-    [tablesQuery.data, order?.tableId, t],
-  );
+  const tableOptions = useMemo(() => {
+    const list = tablesQuery.data || [];
+    const filtered = elevated
+      ? list.filter((tbl) => tbl._id !== order?.tableId && tbl.status !== 'DISABLED')
+      : list.filter((tbl) => tbl._id !== order?.tableId && tbl.status === 'FREE');
+    return filtered.map((tbl) => ({
+      value: tbl._id,
+      label: `${tbl.name}${tbl.status === 'OCCUPIED' ? ` (${t('tableStatus.OCCUPIED')})` : ''}`,
+    }));
+  }, [tablesQuery.data, order?.tableId, t, elevated]);
 
   const toggleItem = (id: string, checked: boolean) => {
     setSelectedItemIds((prev) =>
@@ -208,7 +217,9 @@ export function WaiterOrderPage() {
         title={`${t('waiter.order')} #${order?.number ?? orderId.slice(-4)}`}
         extra={
           <Space>
-            {order?.status !== 'PAID' && order?.status !== 'CANCELLED' && (
+            {order?.status !== 'PAID' &&
+              order?.status !== 'CANCELLED' &&
+              canCancelWholeOrder(user, order?.items || []) && (
               <Button
                 danger
                 icon={<StopOutlined />}
@@ -334,7 +345,7 @@ export function WaiterOrderPage() {
         <Button
           size="large"
           icon={<PercentageOutlined />}
-          disabled={!order?.items?.length}
+          disabled={!order?.items?.length || !allowDiscount}
           onClick={() => setDiscountOpen(true)}
           style={{ flex: '1 1 100px' }}
         >
@@ -439,12 +450,16 @@ export function WaiterOrderPage() {
                   checked={selectedItemIds.includes(item._id)}
                   onChange={(e) => toggleItem(item._id, e.target.checked)}
                 />,
-                <Button
-                  key="del"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={() => removeMutation.mutate(item._id)}
-                />,
+                ...(canCancelOrderItem(user, item)
+                  ? [
+                      <Button
+                        key="del"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => removeMutation.mutate(item._id)}
+                      />,
+                    ]
+                  : []),
               ]}
             >
               <List.Item.Meta
@@ -552,7 +567,7 @@ export function WaiterOrderPage() {
             size="large"
             icon={<PercentageOutlined />}
             block
-            disabled={!order?.items?.length}
+            disabled={!order?.items?.length || !allowDiscount}
             onClick={() => setDiscountOpen(true)}
             style={{ marginTop: 8 }}
           >
@@ -587,7 +602,7 @@ export function WaiterOrderPage() {
         destroyOnClose
       >
         <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-          {t('waiter.transferHint')}
+          {elevated ? t('waiter.transferHint') : t('waiter.transferFreeOnly')}
         </Text>
         <Text strong style={{ display: 'block', marginBottom: 8 }}>
           {t('waiter.transferItems')}: {selectedItemIds.length || transferableItems.length}

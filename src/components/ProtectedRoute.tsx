@@ -12,6 +12,7 @@ interface Props {
 function roleAllowed(userRole: AppRole, roles: AppRole[]): boolean {
   if (roles.includes(userRole)) return true;
   if (roles.includes('KITCHEN') && userRole === 'BAR') return true;
+  if (roles.includes('WAITER') && userRole === 'SENIOR_WAITER') return true;
   if (roles.some(isAdminRole) && isAdminRole(userRole)) return true;
   return false;
 }

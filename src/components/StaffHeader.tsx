@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { disconnectSocket } from '../websocket/socket';
+import { isAdminRole } from '../utils/roles';
 
 const { Text, Title } = Typography;
 
@@ -18,6 +19,7 @@ export function StaffHeader({ title, extra }: Props) {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const showFloorSwitch = isAdminRole(user?.role);
 
   const onLogout = async () => {
     disconnectSocket();
@@ -51,7 +53,23 @@ export function StaffHeader({ title, extra }: Props) {
           {user?.name} · {t(`roles.${user?.role}`, { defaultValue: user?.role })}
         </Text>
       </div>
-      <Flex gap={8} align="center">
+      <Flex gap={8} align="center" wrap="wrap">
+        {showFloorSwitch && (
+          <>
+            <Button size="large" onClick={() => navigate('/waiter')}>
+              {t('waiter.title')}
+            </Button>
+            <Button size="large" onClick={() => navigate('/cashier')}>
+              {t('cashier.title')}
+            </Button>
+            <Button size="large" onClick={() => navigate('/kitchen')}>
+              {t('kitchen.title')}
+            </Button>
+            <Button size="large" onClick={() => navigate('/admin')}>
+              {t('admin.dashboard')}
+            </Button>
+          </>
+        )}
         {extra}
         <Button icon={<LogoutOutlined />} onClick={() => void onLogout()} size="large">
           {t('app.logout')}

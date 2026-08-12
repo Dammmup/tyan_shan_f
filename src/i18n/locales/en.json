@@ -40,6 +40,7 @@
     "MANAGER": "Manager",
     "CASHIER": "Cashier",
     "WAITER": "Waiter",
+    "SENIOR_WAITER": "Senior waiter",
     "KITCHEN": "Kitchen",
     "BAR": "Bar"
   },
@@ -110,6 +111,7 @@
     "transferDone": "Dishes transferred",
     "transferItems": "Items",
     "transferAll": "Select all transferable",
+    "transferFreeOnly": "After sending, dishes cannot be deleted — only move to a free table. Discounts require senior waiter or admin.",
     "selectTable": "Select table",
     "prepaid": "Prepayment",
     "prepaidHint": "Deposit the guest already left for the table. Final payment uses the remaining due.",
@@ -183,7 +185,12 @@
     "reportShifts": "By shifts",
     "shiftReport": "Shift report",
     "openedAt": "Opened",
-    "selectShift": "Select a shift in the table"
+    "selectShift": "Select a shift in the table",
+    "pinSet": "PIN set",
+    "pinMissing": "No PIN",
+    "pinCreateHint": "Digits are visible while typing. Min 4. For PIN login.",
+    "pinEditHintSet": "PIN already set. Enter a new one to replace (min 4), or leave blank.",
+    "pinEditHintMissing": "PIN not set yet. Enter at least 4 digits."
   },
   "availability": {
     "AVAILABLE": "Available",

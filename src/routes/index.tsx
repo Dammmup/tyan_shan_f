@@ -42,7 +42,7 @@ export function AppRouter() {
         <Route
           path="/waiter"
           element={
-            <ProtectedRoute roles={['WAITER', 'OWNER', 'ADMIN', 'MANAGER']}>
+            <ProtectedRoute roles={['WAITER', 'SENIOR_WAITER', 'OWNER', 'ADMIN', 'MANAGER']}>
               <WaiterHallPage />
             </ProtectedRoute>
           }
@@ -50,7 +50,7 @@ export function AppRouter() {
         <Route
           path="/waiter/orders/:orderId"
           element={
-            <ProtectedRoute roles={['WAITER', 'OWNER', 'ADMIN', 'MANAGER']}>
+            <ProtectedRoute roles={['WAITER', 'SENIOR_WAITER', 'OWNER', 'ADMIN', 'MANAGER']}>
               <WaiterOrderPage />
             </ProtectedRoute>
           }

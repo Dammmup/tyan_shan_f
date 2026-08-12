@@ -39,6 +39,7 @@ export type AppRole =
   | 'MANAGER'
   | 'CASHIER'
   | 'WAITER'
+  | 'SENIOR_WAITER'
   | 'KITCHEN'
   | 'BAR'
   | string;

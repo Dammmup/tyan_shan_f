@@ -27,6 +27,8 @@ import { StaffHeader } from '../../components/StaffHeader';
 import { ordersApi, paymentsApi, shiftsApi } from '../../api/endpoints';
 import { formatMoney, orderDueTiyns, tengeToTiyns, tiynsToTenge } from '../../utils/money';
 import { formatDateTime, formatElapsed } from '../../utils/time';
+import { canApplyDiscount } from '../../utils/roles';
+import { useAuthStore } from '../../stores/authStore';
 import type { Order, PaymentMethod } from '../../types';
 
 const { Text, Title } = Typography;
@@ -34,6 +36,8 @@ const { Text, Title } = Typography;
 export function CashierPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const allowDiscount = canApplyDiscount(user);
   const [params] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | undefined>(params.get('orderId') || undefined);
   const [method, setMethod] = useState<PaymentMethod>('CASH');
@@ -242,12 +246,14 @@ export function CashierPage() {
                     {t('waiter.service')}: {formatMoney(selected.serviceChargeTiyns || 0)}
                   </Text>
                   <Space wrap style={{ marginBottom: 16 }}>
-                    <Button
-                      icon={<PercentageOutlined />}
-                      onClick={() => setDiscountOpen(true)}
-                    >
-                      {t('waiter.applyDiscount')}
-                    </Button>
+                    {allowDiscount && (
+                      <Button
+                        icon={<PercentageOutlined />}
+                        onClick={() => setDiscountOpen(true)}
+                      >
+                        {t('waiter.applyDiscount')}
+                      </Button>
+                    )}
                     <Button onClick={() => setPrepaidOpen(true)}>
                       {t('waiter.prepaid')}
                     </Button>
