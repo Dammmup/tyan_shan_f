@@ -282,9 +282,10 @@ export const printersApi = {
 };
 
 export const discountsApi = {
-  list: () => api.get<Discount[]>('/discounts').then((r) => r.data),
+  list: () =>
+    api.get<Discount[]>('/discounts', { params: withRestaurant() }).then((r) => r.data),
   create: (body: Record<string, unknown>) =>
-    api.post<Discount>('/discounts', body).then((r) => r.data),
+    api.post<Discount>('/discounts', withRestaurant(body)).then((r) => r.data),
   update: (id: string, body: Record<string, unknown>) =>
     api.patch<Discount>(`/discounts/${id}`, body).then((r) => r.data),
   remove: (id: string) => api.delete(`/discounts/${id}`),
