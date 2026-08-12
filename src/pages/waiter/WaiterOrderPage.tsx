@@ -78,6 +78,7 @@ export function WaiterOrderPage() {
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [targetTableId, setTargetTableId] = useState<string | undefined>();
   const [prepaidOpen, setPrepaidOpen] = useState(false);
+  const [precheckPreviewOpen, setPrecheckPreviewOpen] = useState(false);
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId],
@@ -147,7 +148,9 @@ export function WaiterOrderPage() {
   const precheckMutation = useMutation({
     mutationFn: () => ordersApi.precheck(orderId),
     onSuccess: async () => {
-      message.success(t('waiter.precheck'));
+      message.success(t('waiter.precheckPrinted'));
+      setPrecheckPreviewOpen(false);
+      setCartOpen(false);
       await invalidate();
     },
     onError: () => message.error(t('app.error')),
@@ -197,6 +200,18 @@ export function WaiterOrderPage() {
     () => (order?.items || []).filter((i) => TRANSFERABLE.has(i.status)),
     [order],
   );
+  const precheckItems = useMemo(
+    () => (order?.items || []).filter((i) => i.status !== 'CANCELLED'),
+    [order],
+  );
+
+  const openPrecheckPreview = () => {
+    if (!precheckItems.length) {
+      message.warning(t('waiter.emptyCart'));
+      return;
+    }
+    setPrecheckPreviewOpen(true);
+  };
 
   const tableOptions = useMemo(() => {
     const list = tablesQuery.data || [];
@@ -407,8 +422,8 @@ export function WaiterOrderPage() {
           size="large"
           icon={<FileTextOutlined />}
           disabled={!order?.items?.length}
-          loading={precheckMutation.isPending}
-          onClick={() => precheckMutation.mutate()}
+          loading={false}
+          onClick={openPrecheckPreview}
           style={{ flex: '1 1 100px' }}
         >
           {t('waiter.precheck')}
@@ -654,14 +669,152 @@ export function WaiterOrderPage() {
             icon={<FileTextOutlined />}
             block
             disabled={!order?.items?.length}
-            loading={precheckMutation.isPending}
-            onClick={() => precheckMutation.mutate()}
+            onClick={openPrecheckPreview}
             style={{ marginTop: 8 }}
           >
             {t('waiter.precheck')}
           </Button>
         </Flex>
       </Drawer>
+
+      <Modal
+        open={precheckPreviewOpen}
+        onCancel={() => setPrecheckPreviewOpen(false)}
+        footer={null}
+        width="100%"
+        style={{ top: 0, maxWidth: '100vw', paddingBottom: 0, margin: 0 }}
+        styles={{
+          body: {
+            height: 'calc(100vh - 55px)',
+            overflow: 'auto',
+            padding: 16,
+            background: '#f7f3ea',
+          },
+          content: { borderRadius: 0, height: '100vh' },
+        }}
+        title={
+          <span style={{ fontFamily: 'Fraunces, serif' }}>
+            {t('waiter.precheckPreview')}
+            {order?.tableName ? ` · ${order.tableName}` : ''}
+            {` · #${order?.number ?? orderId.slice(-4)}`}
+          </span>
+        }
+        destroyOnClose
+      >
+        <List
+          dataSource={precheckItems}
+          locale={{ emptyText: t('waiter.emptyCart') }}
+          renderItem={(item) => {
+            const mods = (item.modifiers || [])
+              .map((m) => m.name || m.nameSnapshot || '')
+              .filter(Boolean)
+              .join(', ');
+            return (
+              <List.Item style={{ padding: '12px 0', borderColor: 'rgba(20,61,52,0.12)' }}>
+                <Flex justify="space-between" align="flex-start" style={{ width: '100%', gap: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Text strong style={{ fontSize: 17 }}>
+                      {item.quantity}× {item.nameSnapshot}
+                    </Text>
+                    {mods ? (
+                      <Text type="secondary" style={{ display: 'block', fontSize: 13 }}>
+                        {mods}
+                      </Text>
+                    ) : null}
+                    {item.note ? (
+                      <Text type="secondary" style={{ display: 'block', fontSize: 13 }}>
+                        {item.note}
+                      </Text>
+                    ) : null}
+                  </div>
+                  <Text strong style={{ fontSize: 16, whiteSpace: 'nowrap' }}>
+                    {formatMoney(itemLineTotalTiyns(item))}
+                  </Text>
+                </Flex>
+              </List.Item>
+            );
+          }}
+        />
+
+        <Divider style={{ margin: '16px 0' }} />
+
+        <Flex vertical gap={10}>
+          <Flex justify="space-between">
+            <Text type="secondary" style={{ fontSize: 16 }}>
+              {t('waiter.subtotal')}
+            </Text>
+            <Text style={{ fontSize: 16 }}>{formatMoney(order?.subtotalTiyns || 0)}</Text>
+          </Flex>
+          {(order?.discountTiyns || 0) > 0 && (
+            <Flex justify="space-between">
+              <Text type="secondary" style={{ fontSize: 16 }}>
+                {t('waiter.discount')}
+              </Text>
+              <Text style={{ fontSize: 16 }}>−{formatMoney(order?.discountTiyns || 0)}</Text>
+            </Flex>
+          )}
+          <Flex justify="space-between">
+            <Text type="secondary" style={{ fontSize: 16 }}>
+              {t('waiter.service')}
+            </Text>
+            <Text style={{ fontSize: 16 }}>{formatMoney(order?.serviceChargeTiyns || 0)}</Text>
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Text strong style={{ fontSize: 18 }}>
+              {t('waiter.total')}
+            </Text>
+            <Text strong style={{ fontSize: 20 }}>
+              {formatMoney(order?.totalTiyns || 0)}
+            </Text>
+          </Flex>
+          {(order?.prepaidTiyns || 0) > 0 && (
+            <>
+              <Flex justify="space-between">
+                <Text type="secondary" style={{ fontSize: 16 }}>
+                  {t('waiter.prepaid')}
+                </Text>
+                <Text style={{ fontSize: 16 }}>−{formatMoney(order?.prepaidTiyns || 0)}</Text>
+              </Flex>
+              <Flex justify="space-between" align="center">
+                <Text strong style={{ fontSize: 18 }}>
+                  {t('waiter.due')}
+                </Text>
+                <Title level={2} style={{ margin: 0, color: '#1f6f5b', fontFamily: 'Fraunces, serif' }}>
+                  {formatMoney(orderDueTiyns(order || {}))}
+                </Title>
+              </Flex>
+            </>
+          )}
+        </Flex>
+
+        <div
+          style={{
+            position: 'sticky',
+            bottom: 0,
+            marginTop: 24,
+            paddingTop: 12,
+            paddingBottom: 'max(8px, env(safe-area-inset-bottom, 8px))',
+            background: 'linear-gradient(180deg, transparent, #f7f3ea 24%)',
+            display: 'flex',
+            gap: 10,
+          }}
+        >
+          <Button size="large" block onClick={() => setPrecheckPreviewOpen(false)} style={{ height: 52 }}>
+            {t('app.cancel')}
+          </Button>
+          <Button
+            type="primary"
+            size="large"
+            block
+            icon={<FileTextOutlined />}
+            loading={precheckMutation.isPending}
+            onClick={() => precheckMutation.mutate()}
+            style={{ height: 52 }}
+          >
+            {t('waiter.precheckPrint')}
+          </Button>
+        </div>
+      </Modal>
 
       <Modal
         open={transferOpen}
