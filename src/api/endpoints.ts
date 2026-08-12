@@ -100,6 +100,8 @@ export const ordersApi = {
     api.delete(`/orders/${orderId}/items/${itemId}`).then(async () => ordersApi.get(orderId)),
   sendSuborder: (orderId: string, itemIds?: string[]) =>
     api.post(`/orders/${orderId}/suborders`, { itemIds }).then(async () => ordersApi.get(orderId)),
+  precheck: (orderId: string) =>
+    api.post<{ ok: boolean; printJobId: string }>(`/orders/${orderId}/precheck`).then((r) => r.data),
 };
 
 export const kitchenApi = {

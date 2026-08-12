@@ -18,6 +18,7 @@ import {
 import {
   ArrowLeftOutlined,
   DeleteOutlined,
+  FileTextOutlined,
   PlusOutlined,
   SendOutlined,
   WalletOutlined,
@@ -95,6 +96,15 @@ export function WaiterOrderPage() {
     mutationFn: () => ordersApi.sendSuborder(orderId),
     onSuccess: async () => {
       message.success(t('app.success'));
+      await invalidate();
+    },
+    onError: () => message.error(t('app.error')),
+  });
+
+  const precheckMutation = useMutation({
+    mutationFn: () => ordersApi.precheck(orderId),
+    onSuccess: async () => {
+      message.success(t('waiter.precheck'));
       await invalidate();
     },
     onError: () => message.error(t('app.error')),
@@ -223,6 +233,16 @@ export function WaiterOrderPage() {
         </Button>
         <Button
           size="large"
+          icon={<FileTextOutlined />}
+          disabled={!order?.items?.length}
+          loading={precheckMutation.isPending}
+          onClick={() => precheckMutation.mutate()}
+          style={{ minWidth: 120 }}
+        >
+          {t('waiter.precheck')}
+        </Button>
+        <Button
+          size="large"
           icon={<WalletOutlined />}
           onClick={() => navigate(`/cashier?orderId=${orderId}`)}
           style={{ minWidth: 120 }}
@@ -318,11 +338,39 @@ export function WaiterOrderPage() {
           )}
         />
         <Divider />
-        <Flex justify="space-between" align="center">
-          <Text strong>{t('payment.total')}</Text>
-          <Title level={3} style={{ margin: 0, color: '#1f6f5b' }}>
-            {formatMoney(order?.totalTiyns || 0)}
-          </Title>
+        <Flex vertical gap={6}>
+          <Flex justify="space-between">
+            <Text type="secondary">{t('waiter.subtotal')}</Text>
+            <Text>{formatMoney(order?.subtotalTiyns || 0)}</Text>
+          </Flex>
+          {(order?.discountTiyns || 0) > 0 && (
+            <Flex justify="space-between">
+              <Text type="secondary">{t('waiter.discount')}</Text>
+              <Text>−{formatMoney(order?.discountTiyns || 0)}</Text>
+            </Flex>
+          )}
+          <Flex justify="space-between">
+            <Text type="secondary">{t('waiter.service')}</Text>
+            <Text>{formatMoney(order?.serviceChargeTiyns || 0)}</Text>
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Text strong>{t('payment.total')}</Text>
+            <Title level={3} style={{ margin: 0, color: '#1f6f5b' }}>
+              {formatMoney(order?.totalTiyns || 0)}
+            </Title>
+          </Flex>
+          <Button
+            type="primary"
+            size="large"
+            icon={<FileTextOutlined />}
+            block
+            disabled={!order?.items?.length}
+            loading={precheckMutation.isPending}
+            onClick={() => precheckMutation.mutate()}
+            style={{ marginTop: 8 }}
+          >
+            {t('waiter.precheck')}
+          </Button>
         </Flex>
       </Drawer>
     </div>

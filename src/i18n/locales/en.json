@@ -88,13 +88,17 @@
     "qty": "Qty",
     "modifiers": "Modifiers",
     "sendSuborder": "Send to kitchen",
+    "precheck": "Pre-check",
     "payLink": "Go to payment",
     "emptyCart": "Cart is empty",
     "selectCategory": "Category",
     "stopped": "Stop list",
     "order": "Order",
     "newItems": "New items",
-    "sentItems": "Sent items"
+    "sentItems": "Sent items",
+    "subtotal": "Subtotal",
+    "service": "Service 10%",
+    "discount": "Discount"
   },
   "kitchen": {
     "title": "Kitchen / Bar",

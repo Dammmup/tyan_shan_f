@@ -161,6 +161,7 @@ export interface Order {
   items: OrderItem[];
   subtotalTiyns: number;
   discountTiyns?: number;
+  serviceChargeTiyns?: number;
   totalTiyns: number;
   createdAt?: string;
   updatedAt?: string;

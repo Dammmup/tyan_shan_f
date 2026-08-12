@@ -88,13 +88,17 @@
     "qty": "Кол-во",
     "modifiers": "Модификаторы",
     "sendSuborder": "Отправить на кухню",
+    "precheck": "Предчек",
     "payLink": "К оплате",
     "emptyCart": "Корзина пуста",
     "selectCategory": "Категория",
     "stopped": "Стоп-лист",
     "order": "Заказ",
     "newItems": "Новые позиции",
-    "sentItems": "Отправленные"
+    "sentItems": "Отправленные",
+    "subtotal": "Сумма",
+    "service": "Обслуживание 10%",
+    "discount": "Скидка"
   },
   "kitchen": {
     "title": "Кухня / Бар",

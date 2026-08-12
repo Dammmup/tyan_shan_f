@@ -190,6 +190,11 @@ export function CashierPage() {
                   <Title level={3} style={{ marginTop: 0, fontFamily: 'Fraunces, serif' }}>
                     {t('payment.total')}: {formatMoney(selected.totalTiyns)}
                   </Title>
+                  <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+                    {t('waiter.subtotal')}: {formatMoney(selected.subtotalTiyns || 0)}
+                    {' · '}
+                    {t('waiter.service')}: {formatMoney(selected.serviceChargeTiyns || 0)}
+                  </Text>
                   <Radio.Group
                     value={method}
                     onChange={(e) => setMethod(e.target.value as PaymentMethod)}

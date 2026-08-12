@@ -88,13 +88,17 @@
     "qty": "Саны",
     "modifiers": "Модификаторлар",
     "sendSuborder": "Ас үйге жіберу",
+    "precheck": "Предчек",
     "payLink": "Төлемге",
     "emptyCart": "Себет бос",
     "selectCategory": "Санат",
     "stopped": "Стоп-лист",
     "order": "Тапсырыс",
     "newItems": "Жаңа позициялар",
-    "sentItems": "Жіберілгендер"
+    "sentItems": "Жіберілгендер",
+    "subtotal": "Сома",
+    "service": "Қызмет 10%",
+    "discount": "Жеңілдік"
   },
   "kitchen": {
     "title": "Ас үй / Бар",
