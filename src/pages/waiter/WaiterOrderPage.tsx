@@ -9,6 +9,7 @@ import {
   InputNumber,
   List,
   Modal,
+  Select,
   Space,
   Spin,
   Tag,
@@ -23,19 +24,22 @@ import {
   PlusOutlined,
   SendOutlined,
   StopOutlined,
+  SwapOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
 import { StaffHeader } from '../../components/StaffHeader';
-import { menuApi, ordersApi } from '../../api/endpoints';
+import { menuApi, ordersApi, tablesApi } from '../../api/endpoints';
 import { formatMoney, itemLineTotalTiyns } from '../../utils/money';
 import { centerLabel } from '../../utils/centers';
 import { formatDateTime, formatElapsed } from '../../utils/time';
 import type { Product } from '../../types';
 
 const { Text, Title } = Typography;
+
+const TRANSFERABLE = new Set(['NEW', 'SENT', 'COOKING', 'READY']);
 
 export function WaiterOrderPage() {
   const { orderId = '' } = useParams();
@@ -49,11 +53,20 @@ export function WaiterOrderPage() {
   const [modifierIds, setModifierIds] = useState<string[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [discountOpen, setDiscountOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [targetTableId, setTargetTableId] = useState<string | undefined>();
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId],
     queryFn: () => ordersApi.get(orderId),
     enabled: Boolean(orderId),
+  });
+
+  const tablesQuery = useQuery({
+    queryKey: ['tables', 'all'],
+    queryFn: () => tablesApi.list(),
+    enabled: transferOpen,
   });
 
   const categoriesQuery = useQuery({
@@ -127,6 +140,26 @@ export function WaiterOrderPage() {
     onError: () => message.error(t('app.error')),
   });
 
+  const transferMutation = useMutation({
+    mutationFn: () =>
+      ordersApi.transfer(orderId, {
+        targetTableId: targetTableId!,
+        itemIds: selectedItemIds.length ? selectedItemIds : undefined,
+      }),
+    onSuccess: async (res) => {
+      message.success(t('waiter.transferDone'));
+      setTransferOpen(false);
+      setSelectedItemIds([]);
+      setTargetTableId(undefined);
+      setCartOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ['tables'] });
+      await queryClient.invalidateQueries({ queryKey: ['orders'] });
+      await queryClient.invalidateQueries({ queryKey: ['kitchen'] });
+      navigate(`/waiter/orders/${res.target._id}`);
+    },
+    onError: () => message.error(t('app.error')),
+  });
+
   const order = orderQuery.data;
   const newItems = useMemo(
     () => (order?.items || []).filter((i) => i.status === 'NEW'),
@@ -136,6 +169,27 @@ export function WaiterOrderPage() {
     () => (order?.items || []).filter((i) => i.status !== 'NEW' && i.status !== 'CANCELLED'),
     [order],
   );
+  const transferableItems = useMemo(
+    () => (order?.items || []).filter((i) => TRANSFERABLE.has(i.status)),
+    [order],
+  );
+
+  const tableOptions = useMemo(
+    () =>
+      (tablesQuery.data || [])
+        .filter((tbl) => tbl._id !== order?.tableId && tbl.status !== 'DISABLED')
+        .map((tbl) => ({
+          value: tbl._id,
+          label: `${tbl.name}${tbl.status === 'OCCUPIED' ? ` (${t('tableStatus.OCCUPIED')})` : ''}`,
+        })),
+    [tablesQuery.data, order?.tableId, t],
+  );
+
+  const toggleItem = (id: string, checked: boolean) => {
+    setSelectedItemIds((prev) =>
+      checked ? [...new Set([...prev, id])] : prev.filter((x) => x !== id),
+    );
+  };
 
   if (orderQuery.isLoading) {
     return (
@@ -295,6 +349,18 @@ export function WaiterOrderPage() {
         </Button>
         <Button
           size="large"
+          icon={<SwapOutlined />}
+          disabled={!transferableItems.length}
+          onClick={() => {
+            setSelectedItemIds(transferableItems.map((i) => i._id));
+            setTransferOpen(true);
+          }}
+          style={{ flex: '1 1 100px' }}
+        >
+          {t('waiter.transfer')}
+        </Button>
+        <Button
+          size="large"
           icon={<WalletOutlined />}
           onClick={() => navigate(`/cashier?orderId=${orderId}`)}
           style={{ flex: '1 1 100px' }}
@@ -356,6 +422,11 @@ export function WaiterOrderPage() {
           renderItem={(item) => (
             <List.Item
               actions={[
+                <Checkbox
+                  key="sel"
+                  checked={selectedItemIds.includes(item._id)}
+                  onChange={(e) => toggleItem(item._id, e.target.checked)}
+                />,
                 <Button
                   key="del"
                   danger
@@ -383,7 +454,19 @@ export function WaiterOrderPage() {
         <List
           dataSource={sentItems}
           renderItem={(item) => (
-            <List.Item>
+            <List.Item
+              actions={
+                TRANSFERABLE.has(item.status)
+                  ? [
+                      <Checkbox
+                        key="sel"
+                        checked={selectedItemIds.includes(item._id)}
+                        onChange={(e) => toggleItem(item._id, e.target.checked)}
+                      />,
+                    ]
+                  : undefined
+              }
+            >
               <List.Item.Meta
                 title={`${item.quantity}× ${item.nameSnapshot}`}
                 description={
@@ -400,6 +483,22 @@ export function WaiterOrderPage() {
           )}
         />
         <Divider />
+        <Button
+          icon={<SwapOutlined />}
+          block
+          size="large"
+          disabled={!transferableItems.length}
+          onClick={() => {
+            if (!selectedItemIds.length) {
+              setSelectedItemIds(transferableItems.map((i) => i._id));
+            }
+            setTransferOpen(true);
+          }}
+          style={{ marginBottom: 12 }}
+        >
+          {t('waiter.transfer')}
+          {selectedItemIds.length ? ` (${selectedItemIds.length})` : ''}
+        </Button>
         <Flex vertical gap={6}>
           <Flex justify="space-between">
             <Text type="secondary">{t('waiter.subtotal')}</Text>
@@ -445,6 +544,45 @@ export function WaiterOrderPage() {
           </Button>
         </Flex>
       </Drawer>
+
+      <Modal
+        open={transferOpen}
+        title={t('waiter.transfer')}
+        onCancel={() => {
+          setTransferOpen(false);
+          setTargetTableId(undefined);
+        }}
+        onOk={() => transferMutation.mutate()}
+        confirmLoading={transferMutation.isPending}
+        okButtonProps={{ disabled: !targetTableId }}
+        okText={t('waiter.transferConfirm')}
+        destroyOnClose
+      >
+        <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          {t('waiter.transferHint')}
+        </Text>
+        <Text strong style={{ display: 'block', marginBottom: 8 }}>
+          {t('waiter.transferItems')}: {selectedItemIds.length || transferableItems.length}
+        </Text>
+        <Select
+          style={{ width: '100%' }}
+          size="large"
+          showSearch
+          optionFilterProp="label"
+          placeholder={t('waiter.selectTable')}
+          value={targetTableId}
+          onChange={setTargetTableId}
+          options={tableOptions}
+          loading={tablesQuery.isLoading}
+        />
+        <Button
+          type="link"
+          style={{ paddingLeft: 0, marginTop: 8 }}
+          onClick={() => setSelectedItemIds(transferableItems.map((i) => i._id))}
+        >
+          {t('waiter.transferAll')}
+        </Button>
+      </Modal>
 
       <ApplyDiscountModal
         open={discountOpen}

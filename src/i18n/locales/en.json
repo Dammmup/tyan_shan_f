@@ -103,7 +103,14 @@
     "applyDiscountHint": "Pick a discount. Total will be recalculated with service charge.",
     "selectDiscount": "Select discount",
     "cancelOrder": "Cancel order",
-    "cancelOrderHint": "Order and kitchen tickets will be cancelled, table freed."
+    "cancelOrderHint": "Order and kitchen tickets will be cancelled, table freed.",
+    "transfer": "Move to table",
+    "transferHint": "Selected dishes move to the target table order. Kitchen sees the new table. Served items stay here.",
+    "transferConfirm": "Transfer",
+    "transferDone": "Dishes transferred",
+    "transferItems": "Items",
+    "transferAll": "Select all transferable",
+    "selectTable": "Select table"
   },
   "kitchen": {
     "title": "Kitchen / Bar",
