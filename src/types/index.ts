@@ -78,6 +78,7 @@ export interface Table {
   hallId: string;
   restaurantId: string;
   status: TableStatus;
+  seats?: number;
   capacity?: number;
   positionX?: number;
   positionY?: number;
@@ -214,6 +215,15 @@ export interface Role {
   _id: string;
   name: string;
   permissions: string[];
+}
+
+export interface Restaurant {
+  _id: string;
+  name: string;
+  address?: string;
+  timezone?: string;
+  serviceChargePercent?: number;
+  isActive?: boolean;
 }
 
 export interface Printer {

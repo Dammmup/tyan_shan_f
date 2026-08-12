@@ -7,6 +7,7 @@ import {
   Col,
   Divider,
   Form,
+  Input,
   InputNumber,
   List,
   Modal,
@@ -17,8 +18,10 @@ import {
   Typography,
   message,
 } from 'antd';
+import { PercentageOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
 import { StaffHeader } from '../../components/StaffHeader';
 import { ordersApi, paymentsApi, shiftsApi } from '../../api/endpoints';
 import { formatMoney, tengeToTiyns, tiynsToTenge } from '../../utils/money';
@@ -37,7 +40,10 @@ export function CashierPage() {
   const [cashPartTenge, setCashPartTenge] = useState<number>(0);
   const [cardPartTenge, setCardPartTenge] = useState<number>(0);
   const [shiftModal, setShiftModal] = useState<'open' | 'close' | null>(null);
+  const [cashModal, setCashModal] = useState<'in' | 'out' | null>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
   const [cashAmount, setCashAmount] = useState(0);
+  const [cashComment, setCashComment] = useState('');
 
   const ordersQuery = useQuery({
     queryKey: ['orders', 'open'],
@@ -120,34 +126,59 @@ export function CashierPage() {
     onError: () => message.error(t('app.error')),
   });
 
+  const cashMove = useMutation({
+    mutationFn: async () => {
+      const tiyns = tengeToTiyns(cashAmount);
+      if (cashModal === 'in') return shiftsApi.cashIn(tiyns, cashComment || undefined);
+      return shiftsApi.cashOut(tiyns, cashComment || undefined);
+    },
+    onSuccess: async () => {
+      message.success(t('app.success'));
+      setCashModal(null);
+      setCashAmount(0);
+      setCashComment('');
+      await queryClient.invalidateQueries({ queryKey: ['shift'] });
+    },
+    onError: () => message.error(t('app.error')),
+  });
+
   const changeTiyns =
     selected && method === 'CASH'
       ? Math.max(0, tengeToTiyns(receivedTenge) - selected.totalTiyns)
       : 0;
 
   const shift = shiftQuery.data;
+  const shiftOpen = Boolean(shift && shift.status === 'OPEN');
 
   return (
     <div style={{ minHeight: '100vh', background: '#ebe4d8' }}>
       <StaffHeader
         title={t('cashier.title')}
         extra={
-          <Space>
-            {!shift || shift.status !== 'OPEN' ? (
+          <Space wrap>
+            {!shiftOpen ? (
               <Button size="large" type="primary" onClick={() => { setCashAmount(0); setShiftModal('open'); }}>
                 {t('cashier.openShift')}
               </Button>
             ) : (
-              <Button size="large" onClick={() => { setCashAmount(0); setShiftModal('close'); }}>
-                {t('cashier.closeShift')}
-              </Button>
+              <>
+                <Button size="large" onClick={() => { setCashAmount(0); setCashComment(''); setCashModal('in'); }}>
+                  {t('cashier.cashIn')}
+                </Button>
+                <Button size="large" onClick={() => { setCashAmount(0); setCashComment(''); setCashModal('out'); }}>
+                  {t('cashier.cashOut')}
+                </Button>
+                <Button size="large" onClick={() => { setCashAmount(0); setShiftModal('close'); }}>
+                  {t('cashier.closeShift')}
+                </Button>
+              </>
             )}
           </Space>
         }
       />
 
       <div style={{ padding: 16 }}>
-        {(!shift || shift.status !== 'OPEN') && (
+        {!shiftOpen && (
           <Alert type="warning" showIcon message={t('cashier.noShift')} style={{ marginBottom: 16 }} />
         )}
 
@@ -200,16 +231,26 @@ export function CashierPage() {
                   </Title>
                   <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
                     {t('waiter.subtotal')}: {formatMoney(selected.subtotalTiyns || 0)}
+                    {(selected.discountTiyns || 0) > 0
+                      ? ` · ${t('waiter.discount')}: −${formatMoney(selected.discountTiyns || 0)}`
+                      : ''}
                     {' · '}
                     {t('waiter.service')}: {formatMoney(selected.serviceChargeTiyns || 0)}
                   </Text>
+                  <Button
+                    icon={<PercentageOutlined />}
+                    style={{ marginBottom: 16 }}
+                    onClick={() => setDiscountOpen(true)}
+                  >
+                    {t('waiter.applyDiscount')}
+                  </Button>
                   <Radio.Group
                     value={method}
                     onChange={(e) => setMethod(e.target.value as PaymentMethod)}
                     optionType="button"
                     buttonStyle="solid"
                     size="large"
-                    style={{ marginBottom: 16 }}
+                    style={{ marginBottom: 16, display: 'block' }}
                     options={[
                       { value: 'CASH', label: t('payment.CASH') },
                       { value: 'CARD', label: t('payment.CARD') },
@@ -267,7 +308,7 @@ export function CashierPage() {
                     size="large"
                     block
                     style={{ height: 52 }}
-                    disabled={!shift || shift.status !== 'OPEN'}
+                    disabled={!shiftOpen}
                     loading={payMutation.isPending}
                     onClick={() => payMutation.mutate()}
                   >
@@ -311,6 +352,43 @@ export function CashierPage() {
           )}
         </Form>
       </Modal>
+
+      <Modal
+        open={cashModal !== null}
+        title={cashModal === 'in' ? t('cashier.cashIn') : t('cashier.cashOut')}
+        onCancel={() => setCashModal(null)}
+        onOk={() => cashMove.mutate()}
+        confirmLoading={cashMove.isPending}
+        okButtonProps={{ disabled: cashAmount <= 0 }}
+      >
+        <Form layout="vertical">
+          <Form.Item label={t('payment.amount')}>
+            <InputNumber
+              min={0}
+              value={cashAmount}
+              onChange={(v) => setCashAmount(Number(v) || 0)}
+              size="large"
+              style={{ width: '100%' }}
+              addonAfter="₸"
+            />
+          </Form.Item>
+          <Form.Item label={t('cashier.cashComment')}>
+            <Input
+              value={cashComment}
+              onChange={(e) => setCashComment(e.target.value)}
+              size="large"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {selected && (
+        <ApplyDiscountModal
+          open={discountOpen}
+          orderId={selected._id}
+          onClose={() => setDiscountOpen(false)}
+        />
+      )}
     </div>
   );
 }

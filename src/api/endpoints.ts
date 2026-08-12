@@ -14,6 +14,7 @@ import type {
   Product,
   ProductAvailability,
   Role,
+  Restaurant,
   Shift,
   Table,
 } from '../types';
@@ -184,6 +185,20 @@ export const usersApi = {
 
 export const rolesApi = {
   list: () => api.get<Role[]>('/roles').then((r) => r.data),
+  create: (body: { name: string; permissions: string[] }) =>
+    api.post<Role>('/roles', body).then((r) => r.data),
+  update: (id: string, body: { name?: string; permissions?: string[] }) =>
+    api.patch<Role>(`/roles/${id}`, body).then((r) => r.data),
+  remove: (id: string) => api.delete(`/roles/${id}`),
+};
+
+export const restaurantsApi = {
+  list: () => api.get<Restaurant[]>('/restaurants').then((r) => r.data),
+  get: (id: string) => api.get<Restaurant>(`/restaurants/${id}`).then((r) => r.data),
+  update: (
+    id: string,
+    body: Partial<Pick<Restaurant, 'name' | 'address' | 'timezone' | 'serviceChargePercent'>>,
+  ) => api.patch<Restaurant>(`/restaurants/${id}`, body).then((r) => r.data),
 };
 
 export const printersApi = {
@@ -202,6 +217,10 @@ export const discountsApi = {
   update: (id: string, body: Record<string, unknown>) =>
     api.patch<Discount>(`/discounts/${id}`, body).then((r) => r.data),
   remove: (id: string) => api.delete(`/discounts/${id}`),
+  apply: (orderId: string, discountId: string) =>
+    api
+      .post(`/discounts/orders/${orderId}/apply`, { discountId })
+      .then((r) => r.data),
 };
 
 export const reportsApi = {

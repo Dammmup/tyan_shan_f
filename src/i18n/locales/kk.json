@@ -97,8 +97,11 @@
     "newItems": "Жаңа позициялар",
     "sentItems": "Жіберілгендер",
     "subtotal": "Сома",
-    "service": "Қызмет 10%",
-    "discount": "Жеңілдік"
+    "service": "Қызмет",
+    "discount": "Жеңілдік",
+    "applyDiscount": "Жеңілдік қолдану",
+    "applyDiscountHint": "Тізімнен жеңілдік таңдаңыз. Қорытынды қызметпен қайта есептеледі.",
+    "selectDiscount": "Жеңілдікті таңдаңыз"
   },
   "kitchen": {
     "title": "Ас үй / Бар",
@@ -122,7 +125,10 @@
     "expected": "Күтілген",
     "discrepancy": "Айырма",
     "noShift": "Ауысым ашылмаған",
-    "selectOrder": "Тапсырысты таңдаңыз"
+    "selectOrder": "Тапсырысты таңдаңыз",
+    "cashIn": "Салым",
+    "cashOut": "Алу",
+    "cashComment": "Пікір"
   },
   "admin": {
     "dashboard": "Дашборд",
@@ -146,7 +152,19 @@
     "reportWaiters": "Даяшылар бойынша",
     "reportProducts": "Тағамдар бойынша",
     "reportPayments": "Төлемдер бойынша",
-    "languageHint": "Интерфейс тілі"
+    "languageHint": "Интерфейс тілі",
+    "addHall": "Зал қосу",
+    "addTable": "Үстел қосу",
+    "seats": "Орын",
+    "status": "Күй",
+    "sortOrder": "Реті",
+    "deleteHallConfirm": "Залды жою?",
+    "deleteTableConfirm": "Үстелді жою?",
+    "restaurantSettings": "Мейрамхана",
+    "cafeName": "Атауы",
+    "address": "Мекенжай",
+    "timezone": "Уақыт белдеуі",
+    "servicePercent": "Қызмет, %"
   },
   "availability": {
     "AVAILABLE": "Қолжетімді",

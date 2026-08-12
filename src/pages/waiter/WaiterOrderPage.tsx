@@ -19,12 +19,14 @@ import {
   ArrowLeftOutlined,
   DeleteOutlined,
   FileTextOutlined,
+  PercentageOutlined,
   PlusOutlined,
   SendOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
 import { StaffHeader } from '../../components/StaffHeader';
 import { menuApi, ordersApi } from '../../api/endpoints';
 import { formatMoney, itemLineTotalTiyns } from '../../utils/money';
@@ -45,6 +47,7 @@ export function WaiterOrderPage() {
   const [qty, setQty] = useState(1);
   const [modifierIds, setModifierIds] = useState<string[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [discountOpen, setDiscountOpen] = useState(false);
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId],
@@ -239,6 +242,15 @@ export function WaiterOrderPage() {
         </Button>
         <Button
           size="large"
+          icon={<PercentageOutlined />}
+          disabled={!order?.items?.length}
+          onClick={() => setDiscountOpen(true)}
+          style={{ flex: '1 1 100px' }}
+        >
+          {t('waiter.discount')}
+        </Button>
+        <Button
+          size="large"
           icon={<FileTextOutlined />}
           disabled={!order?.items?.length}
           loading={precheckMutation.isPending}
@@ -376,6 +388,16 @@ export function WaiterOrderPage() {
             </Title>
           </Flex>
           <Button
+            size="large"
+            icon={<PercentageOutlined />}
+            block
+            disabled={!order?.items?.length}
+            onClick={() => setDiscountOpen(true)}
+            style={{ marginTop: 8 }}
+          >
+            {t('waiter.applyDiscount')}
+          </Button>
+          <Button
             type="primary"
             size="large"
             icon={<FileTextOutlined />}
@@ -389,6 +411,12 @@ export function WaiterOrderPage() {
           </Button>
         </Flex>
       </Drawer>
+
+      <ApplyDiscountModal
+        open={discountOpen}
+        orderId={orderId}
+        onClose={() => setDiscountOpen(false)}
+      />
     </div>
   );
 }

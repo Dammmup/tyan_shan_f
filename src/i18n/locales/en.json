@@ -97,8 +97,11 @@
     "newItems": "New items",
     "sentItems": "Sent items",
     "subtotal": "Subtotal",
-    "service": "Service 10%",
-    "discount": "Discount"
+    "service": "Service",
+    "discount": "Discount",
+    "applyDiscount": "Apply discount",
+    "applyDiscountHint": "Pick a discount. Total will be recalculated with service charge.",
+    "selectDiscount": "Select discount"
   },
   "kitchen": {
     "title": "Kitchen / Bar",
@@ -122,7 +125,10 @@
     "expected": "Expected",
     "discrepancy": "Discrepancy",
     "noShift": "Shift is not open",
-    "selectOrder": "Select an order"
+    "selectOrder": "Select an order",
+    "cashIn": "Cash in",
+    "cashOut": "Cash out",
+    "cashComment": "Comment"
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -146,7 +152,19 @@
     "reportWaiters": "By waiters",
     "reportProducts": "By products",
     "reportPayments": "By payments",
-    "languageHint": "Interface language"
+    "languageHint": "Interface language",
+    "addHall": "Add hall",
+    "addTable": "Add table",
+    "seats": "Seats",
+    "status": "Status",
+    "sortOrder": "Sort order",
+    "deleteHallConfirm": "Delete this hall?",
+    "deleteTableConfirm": "Delete this table?",
+    "restaurantSettings": "Restaurant",
+    "cafeName": "Name",
+    "address": "Address",
+    "timezone": "Timezone",
+    "servicePercent": "Service charge %"
   },
   "availability": {
     "AVAILABLE": "Available",
