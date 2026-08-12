@@ -29,3 +29,15 @@ export function orderDueTiyns(order: {
   return Math.max(0, Math.trunc(order.totalTiyns || 0) - Math.trunc(order.prepaidTiyns || 0));
 }
 
+/** Line total for an order item (API field or qty × unit). */
+export function itemLineTotalTiyns(item: {
+  lineTotalTiyns?: number;
+  totalTiyns?: number;
+  priceSnapshot?: number;
+  quantity?: number;
+}): number {
+  if (item.lineTotalTiyns != null) return Math.trunc(item.lineTotalTiyns);
+  if (item.totalTiyns != null) return Math.trunc(item.totalTiyns);
+  return Math.trunc(item.priceSnapshot || 0) * Math.trunc(item.quantity || 1);
+}
+

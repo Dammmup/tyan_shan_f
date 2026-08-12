@@ -7,6 +7,7 @@ import {
   Group,
   Modal,
   Paper,
+  PasswordInput,
   Select,
   Stack,
   Table,
