@@ -22,7 +22,7 @@ import { notifications } from '@mantine/notifications';
 import { IconEdit, IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { hallsApi, tablesApi } from '../../api/endpoints';
+import { hallsApi, ordersApi, tablesApi } from '../../api/endpoints';
 import type { Hall, Table as HallTable } from '../../types';
 import { TABLE_STATUS_COLORS } from '../../utils/roles';
 
@@ -241,11 +241,22 @@ export function HallsPage() {
                           variant="subtle"
                           color="teal"
                           onClick={() => {
-                            if (table.currentOrderId) {
-                              navigate(`/waiter/orders/${table.currentOrderId}`);
-                            } else {
+                            void (async () => {
+                              try {
+                                if (table.currentOrderId) {
+                                  navigate(`/waiter/orders/${table.currentOrderId}`);
+                                  return;
+                                }
+                                const order = await ordersApi.byTable(table._id);
+                                if (order?._id) {
+                                  navigate(`/waiter/orders/${order._id}`);
+                                  return;
+                                }
+                              } catch {
+                                // fall through to hall view
+                              }
                               navigate('/waiter');
-                            }
+                            })();
                           }}
                         >
                           <IconEye size={16} />

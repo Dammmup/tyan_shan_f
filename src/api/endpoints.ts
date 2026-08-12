@@ -21,10 +21,20 @@ import type {
   Table,
 } from '../types';
 import { api } from './client';
+import { useAuthStore } from '../stores/authStore';
+
+function withRestaurant<T extends Record<string, unknown>>(params?: T): T & { restaurantId?: string } {
+  const rid =
+    useAuthStore.getState().restaurantId ||
+    useAuthStore.getState().user?.restaurantId ||
+    undefined;
+  return { ...(params || ({} as T)), ...(rid ? { restaurantId: rid } : {}) };
+}
 
 export const hallsApi = {
-  list: () => api.get<Hall[]>('/halls').then((r) => r.data),
-  create: (body: Partial<Hall>) => api.post<Hall>('/halls', body).then((r) => r.data),
+  list: () => api.get<Hall[]>('/halls', { params: withRestaurant() }).then((r) => r.data),
+  create: (body: Partial<Hall>) =>
+    api.post<Hall>('/halls', withRestaurant(body as Record<string, unknown>)).then((r) => r.data),
   update: (id: string, body: Partial<Hall>) =>
     api.patch<Hall>(`/halls/${id}`, body).then((r) => r.data),
   remove: (id: string) => api.patch(`/halls/${id}`, { isActive: false }),
@@ -32,8 +42,11 @@ export const hallsApi = {
 
 export const tablesApi = {
   list: (hallId?: string) =>
-    api.get<Table[]>('/tables', { params: { hallId } }).then((r) => r.data),
-  create: (body: Partial<Table>) => api.post<Table>('/tables', body).then((r) => r.data),
+    api
+      .get<Table[]>('/tables', { params: withRestaurant({ hallId }) })
+      .then((r) => r.data),
+  create: (body: Partial<Table>) =>
+    api.post<Table>('/tables', withRestaurant(body as Record<string, unknown>)).then((r) => r.data),
   update: (id: string, body: Partial<Table>) =>
     api.patch<Table>(`/tables/${id}`, body).then((r) => r.data),
   remove: (id: string) => api.patch(`/tables/${id}`, { isActive: false }),
@@ -93,11 +106,22 @@ export const ordersApi = {
     if (params?.open) {
       query.status = 'OPEN,IN_PROGRESS,READY,SERVED';
     }
-    return api.get<Order[]>('/orders', { params: query }).then((r) => {
+    return api.get<Order[]>('/orders', { params: withRestaurant(query) }).then((r) => {
       if (!params?.open) return r.data;
       const openStatuses = new Set(['OPEN', 'IN_PROGRESS', 'READY', 'SERVED']);
       return r.data.filter((o) => openStatuses.has(o.status));
     });
+  },
+  byTable: async (tableId: string) => {
+    const raw = await api.get<Order | { order: Order; items: Order['items'] }>(
+      `/orders/by-table/${tableId}`,
+      { params: withRestaurant() },
+    );
+    const data = raw.data;
+    if (data && typeof data === 'object' && 'order' in data) {
+      return { ...data.order, items: data.items || [] };
+    }
+    return data as Order;
   },
   get: async (id: string) => {
     const raw = await api.get<Order | { order: Order; items: Order['items'] }>(`/orders/${id}`);
@@ -108,13 +132,18 @@ export const ordersApi = {
     return data as Order;
   },
   create: (body: { tableId: string; guests?: number }) =>
-    api.post<Order | { order: Order; items?: Order['items'] }>('/orders', body).then((r) => {
-      const data = r.data;
-      if (data && typeof data === 'object' && 'order' in data) {
-        return { ...data.order, items: data.items || [] };
-      }
-      return data as Order;
-    }),
+    api
+      .post<Order | { order: Order; items?: Order['items'] }>(
+        '/orders',
+        withRestaurant(body as Record<string, unknown>),
+      )
+      .then((r) => {
+        const data = r.data;
+        if (data && typeof data === 'object' && 'order' in data) {
+          return { ...data.order, items: data.items || [] };
+        }
+        return data as Order;
+      }),
   addItem: (
     orderId: string,
     body: {

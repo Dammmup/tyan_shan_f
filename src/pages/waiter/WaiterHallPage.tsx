@@ -108,38 +108,42 @@ export function WaiterHallPage() {
 
   const openTable = async (table: Table) => {
     if (table.status === 'DISABLED') return;
-
-    const knownOrderId = resolveOrderId(table);
-    if (knownOrderId) {
-      navigate(`/waiter/orders/${knownOrderId}`);
-      return;
-    }
-
-    // Occupied / reserved: resolve via open orders, or create (backend returns existing if any)
-    if (table.status === 'OCCUPIED' || table.status === 'RESERVED' || Boolean(table.currentOrderId)) {
+    setBusy(true);
+    try {
+      // Always resolve open order by table (owner/admin/waiter share same path).
       try {
-        setBusy(true);
-        const orders = await ordersApi.list({ open: true });
-        const found = orders.find((o) => idOf(o.tableId) === idOf(table._id));
-        if (found) {
-          navigate(`/waiter/orders/${idOf(found._id)}`);
+        const byTable = await ordersApi.byTable(table._id);
+        const oid = idOf(byTable?._id);
+        if (oid) {
+          navigate(`/waiter/orders/${oid}`);
           return;
         }
+      } catch {
+        // 404 = no open order yet
+      }
+
+      const knownOrderId = resolveOrderId(table);
+      if (knownOrderId) {
+        navigate(`/waiter/orders/${knownOrderId}`);
+        return;
+      }
+
+      if (table.status === 'OCCUPIED' || table.status === 'RESERVED' || Boolean(table.currentOrderId)) {
         const order = await ordersApi.create({
           tableId: table._id,
           guests: table.capacity || table.seats || 2,
         });
         navigate(`/waiter/orders/${idOf(order._id)}`);
-      } catch {
-        message.error(t('app.error'));
-      } finally {
-        setBusy(false);
+        return;
       }
-      return;
-    }
 
-    setCreateFor(table);
-    setGuests(table.capacity || table.seats || 2);
+      setCreateFor(table);
+      setGuests(table.capacity || table.seats || 2);
+    } catch {
+      message.error(t('app.error'));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const createOrder = async () => {
