@@ -22,6 +22,7 @@ import { useSearchParams } from 'react-router-dom';
 import { StaffHeader } from '../../components/StaffHeader';
 import { ordersApi, paymentsApi, shiftsApi } from '../../api/endpoints';
 import { formatMoney, tengeToTiyns, tiynsToTenge } from '../../utils/money';
+import { formatDateTime, formatElapsed } from '../../utils/time';
 import type { Order, PaymentMethod } from '../../types';
 
 const { Text, Title } = Typography;
@@ -171,7 +172,14 @@ export function CashierPage() {
                     >
                       <List.Item.Meta
                         title={`#${order.number ?? order._id.slice(-4)} · ${order.tableName || ''}`}
-                        description={t(`orderStatus.${order.status}`)}
+                        description={
+                          <>
+                            {t(`orderStatus.${order.status}`)}
+                            {order.createdAt
+                              ? ` · ${formatDateTime(order.createdAt)} (${formatElapsed(order.createdAt)})`
+                              : ''}
+                          </>
+                        }
                       />
                       <Text strong>{formatMoney(order.totalTiyns)}</Text>
                     </List.Item>

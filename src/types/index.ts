@@ -21,7 +21,13 @@ export type KitchenStatus =
   | 'READY'
   | 'SERVED'
   | 'CANCELLED';
-export type ProductionCenter = 'KITCHEN' | 'BAR' | 'GRILL' | 'DESSERT' | 'OTHER';
+export type ProductionCenter =
+  | 'COLD'
+  | 'KITCHEN'
+  | 'BAR'
+  | 'GRILL'
+  | 'DESSERT'
+  | 'OTHER';
 export type PaymentMethod = 'CASH' | 'CARD' | 'SPLIT';
 export type ShiftStatus = 'OPEN' | 'CLOSED';
 export type DiscountType = 'PERCENT' | 'FIXED';
@@ -140,6 +146,7 @@ export interface OrderItem {
   priceSnapshot: number;
   quantity: number;
   status: OrderItemStatus;
+  productionCenter?: ProductionCenter;
   modifiers?: OrderItemModifier[];
   /** Line total in tiyns (API field). */
   lineTotalTiyns?: number;

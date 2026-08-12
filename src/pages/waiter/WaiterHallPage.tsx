@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { StaffHeader } from '../../components/StaffHeader';
 import { hallsApi, ordersApi, tablesApi } from '../../api/endpoints';
 import { TABLE_STATUS_COLORS } from '../../utils/roles';
+import { formatDateTime, formatElapsed } from '../../utils/time';
 import { connectSocket, joinRestaurantRoom } from '../../websocket/socket';
 import { useAuthStore } from '../../stores/authStore';
 import { useEffect } from 'react';
@@ -61,6 +62,20 @@ export function WaiterHallPage() {
   });
 
   const tables = tablesQuery.data || [];
+
+  const openOrdersQuery = useQuery({
+    queryKey: ['orders', 'open-hall'],
+    queryFn: () => ordersApi.list({ open: true }),
+    refetchInterval: 20000,
+  });
+
+  const orderTimeByTable = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const o of openOrdersQuery.data || []) {
+      if (o.tableId && o.createdAt) map.set(o.tableId, o.createdAt);
+    }
+    return map;
+  }, [openOrdersQuery.data]);
 
   const hallOptions = useMemo(
     () => (hallsQuery.data || []).map((h) => ({ value: h._id, label: h.name })),
@@ -139,6 +154,11 @@ export function WaiterHallPage() {
         >
           {tables.map((table) => {
             const color = TABLE_STATUS_COLORS[table.status] || '#8a8175';
+            const openedAt =
+              orderTimeByTable.get(table._id) ||
+              (table.currentOrderId
+                ? openOrdersQuery.data?.find((o) => o._id === table.currentOrderId)?.createdAt
+                : undefined);
             return (
               <button
                 key={table._id}
@@ -160,9 +180,14 @@ export function WaiterHallPage() {
                 <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'Fraunces, serif' }}>
                   {table.name}
                 </div>
-                <Text style={{ color: 'rgba(255,255,255,0.9)' }}>
+                <Text style={{ color: 'rgba(255,255,255,0.9)', display: 'block' }}>
                   {t(`tableStatus.${table.status}`)}
                 </Text>
+                {openedAt ? (
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
+                    {formatDateTime(openedAt)} · {formatElapsed(openedAt)}
+                  </Text>
+                ) : null}
               </button>
             );
           })}

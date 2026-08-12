@@ -1,12 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Col, Empty, Flex, Row, Spin, Tag, Typography, message } from 'antd';
+import { Button, Col, Empty, Flex, Row, Segmented, Spin, Tag, Typography, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { StaffHeader } from '../../components/StaffHeader';
 import { kitchenApi } from '../../api/endpoints';
 import { connectSocket, joinKitchenRoom } from '../../websocket/socket';
 import { useAuthStore } from '../../stores/authStore';
-import type { KitchenOrder, KitchenStatus } from '../../types';
+import { centerLabel } from '../../utils/centers';
+import { formatDateTime, formatElapsed } from '../../utils/time';
+import type { KitchenOrder, KitchenStatus, ProductionCenter } from '../../types';
 
 const { Text, Title } = Typography;
 
@@ -14,6 +16,15 @@ const COLUMNS: { key: KitchenStatus; next?: KitchenStatus; actionKey: string }[]
   { key: 'NEW', next: 'ACCEPTED', actionKey: 'kitchen.accept' },
   { key: 'COOKING', next: 'READY', actionKey: 'kitchen.markReady' },
   { key: 'READY', next: 'SERVED', actionKey: 'kitchen.markServed' },
+];
+
+const CENTER_FILTERS: Array<{ value: 'ALL' | ProductionCenter; label: string }> = [
+  { value: 'ALL', label: 'Все цеха' },
+  { value: 'COLD', label: 'Холодный' },
+  { value: 'KITCHEN', label: 'Китайский' },
+  { value: 'GRILL', label: 'Мангал' },
+  { value: 'BAR', label: 'Бар' },
+  { value: 'DESSERT', label: 'Десерты' },
 ];
 
 function Ticket({
@@ -27,32 +38,39 @@ function Ticket({
   onAction: () => void;
   loading: boolean;
 }) {
+  const elapsed = formatElapsed(order.createdAt);
   return (
     <div
       style={{
         background: '#faf7f1',
         borderRadius: 12,
-        padding: 14,
-        marginBottom: 12,
+        padding: 12,
+        marginBottom: 10,
         border: '1px solid #d4cbbd',
-        boxShadow: '0 6px 14px rgba(20,61,52,0.08)',
+        boxShadow: '0 4px 12px rgba(20,61,52,0.08)',
       }}
     >
-      <Flex justify="space-between" align="center">
-        <Title level={4} style={{ margin: 0, fontFamily: 'Fraunces, serif' }}>
-          #{order.orderNumber ?? order.orderId.slice(-4)}
-        </Title>
-        <Tag color="geekblue">{order.productionCenter}</Tag>
+      <Flex justify="space-between" align="flex-start" gap={8}>
+        <div>
+          <Title level={5} style={{ margin: 0, fontFamily: 'Fraunces, serif' }}>
+            #{order.orderNumber ?? order.orderId.slice(-4)}
+          </Title>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            {order.tableName || '—'}
+            {order.createdAt ? ` · ${formatDateTime(order.createdAt)}` : ''}
+            {elapsed ? ` · ${elapsed}` : ''}
+          </Text>
+        </div>
+        <Tag color="geekblue" style={{ margin: 0 }}>
+          {centerLabel(order.productionCenter)}
+        </Tag>
       </Flex>
-      <Text type="secondary">
-        {order.tableName}
-      </Text>
-      <ul style={{ paddingLeft: 18, margin: '10px 0' }}>
+      <ul style={{ paddingLeft: 18, margin: '8px 0' }}>
         {order.items.map((item, idx) => (
-          <li key={`${item.name}-${idx}`} style={{ marginBottom: 4, fontSize: 16 }}>
-            <strong>{item.quantity}×</strong> {item.name}
+          <li key={`${item.name}-${idx}`} style={{ marginBottom: 4, fontSize: 15, fontWeight: 600 }}>
+            {item.quantity}× {item.name}
             {item.modifiers?.length ? (
-              <div style={{ color: '#5c6b63', fontSize: 13 }}>
+              <div style={{ color: '#5c6b63', fontSize: 12, fontWeight: 400 }}>
                 {item.modifiers
                   .map((m) => (typeof m === 'string' ? m : (m as { name?: string }).name || ''))
                   .filter(Boolean)
@@ -62,7 +80,7 @@ function Ticket({
           </li>
         ))}
       </ul>
-      <Button type="primary" block size="large" loading={loading} onClick={onAction} style={{ height: 48 }}>
+      <Button type="primary" block size="large" loading={loading} onClick={onAction} style={{ height: 44 }}>
         {actionLabel}
       </Button>
     </div>
@@ -73,6 +91,13 @@ export function KitchenPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const restaurantId = useAuthStore((s) => s.restaurantId);
+  const [centerFilter, setCenterFilter] = useState<'ALL' | ProductionCenter>('ALL');
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const listQuery = useQuery({
     queryKey: ['kitchen'],
@@ -116,18 +141,31 @@ export function KitchenPage() {
     onError: () => message.error(t('app.error')),
   });
 
-  const byStatus = (status: KitchenStatus) => {
+  const filtered = useMemo(() => {
     const all = listQuery.data || [];
+    if (centerFilter === 'ALL') return all;
+    return all.filter((o) => o.productionCenter === centerFilter);
+  }, [listQuery.data, centerFilter]);
+
+  const byStatus = (status: KitchenStatus) => {
     if (status === 'COOKING') {
-      return all.filter((o) => o.status === 'COOKING' || o.status === 'ACCEPTED');
+      return filtered.filter((o) => o.status === 'COOKING' || o.status === 'ACCEPTED');
     }
-    return all.filter((o) => o.status === status);
+    return filtered.filter((o) => o.status === status);
   };
 
   return (
     <div style={{ minHeight: '100vh', background: '#ebe4d8' }}>
       <StaffHeader title={t('kitchen.title')} />
       <div style={{ padding: 12 }}>
+        <div style={{ overflowX: 'auto', marginBottom: 12 }}>
+          <Segmented
+            value={centerFilter}
+            onChange={(v) => setCenterFilter(v as 'ALL' | ProductionCenter)}
+            options={CENTER_FILTERS}
+            size="large"
+          />
+        </div>
         {listQuery.isLoading ? (
           <Flex justify="center" style={{ padding: 48 }}>
             <Spin size="large" />
@@ -144,10 +182,13 @@ export function KitchenPage() {
                     padding: '10px 14px',
                     marginBottom: 10,
                     fontWeight: 700,
-                    fontSize: 18,
+                    fontSize: 16,
+                    display: 'flex',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  {t(`kitchenStatus.${col.key}`)}
+                  <span>{t(`kitchenStatus.${col.key}`)}</span>
+                  <span style={{ opacity: 0.8 }}>{byStatus(col.key).length}</span>
                 </div>
                 {byStatus(col.key).length === 0 ? (
                   <Empty description={t('kitchen.empty')} />

@@ -28,6 +28,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { StaffHeader } from '../../components/StaffHeader';
 import { menuApi, ordersApi } from '../../api/endpoints';
 import { formatMoney, itemLineTotalTiyns } from '../../utils/money';
+import { centerLabel } from '../../utils/centers';
+import { formatDateTime, formatElapsed } from '../../utils/time';
 import type { Product } from '../../types';
 
 const { Text, Title } = Typography;
@@ -146,6 +148,9 @@ export function WaiterOrderPage() {
       <div style={{ padding: 12 }}>
         <Text type="secondary">
           {order?.tableName} · {t(`orderStatus.${order?.status || 'OPEN'}`)}
+          {order?.createdAt
+            ? ` · ${formatDateTime(order.createdAt)} (${formatElapsed(order.createdAt)})`
+            : ''}
         </Text>
 
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '12px 0' }}>
@@ -210,14 +215,15 @@ export function WaiterOrderPage() {
           right: 0,
           bottom: 0,
           zIndex: 100,
-          padding: 12,
+          padding: 10,
           background: 'rgba(20,61,52,0.95)',
           display: 'flex',
+          flexWrap: 'wrap',
           gap: 8,
           maxWidth: '100vw',
         }}
       >
-        <Button size="large" block onClick={() => setCartOpen(true)}>
+        <Button size="large" style={{ flex: '1 1 140px' }} onClick={() => setCartOpen(true)}>
           {t('waiter.cart')} ({order?.items?.length || 0}) · {formatMoney(order?.totalTiyns || 0)}
         </Button>
         <Button
@@ -227,7 +233,7 @@ export function WaiterOrderPage() {
           disabled={!newItems.length}
           loading={sendMutation.isPending}
           onClick={() => sendMutation.mutate()}
-          style={{ minWidth: 140 }}
+          style={{ flex: '1 1 120px' }}
         >
           {t('waiter.sendSuborder')}
         </Button>
@@ -237,7 +243,7 @@ export function WaiterOrderPage() {
           disabled={!order?.items?.length}
           loading={precheckMutation.isPending}
           onClick={() => precheckMutation.mutate()}
-          style={{ minWidth: 120 }}
+          style={{ flex: '1 1 100px' }}
         >
           {t('waiter.precheck')}
         </Button>
@@ -245,7 +251,7 @@ export function WaiterOrderPage() {
           size="large"
           icon={<WalletOutlined />}
           onClick={() => navigate(`/cashier?orderId=${orderId}`)}
-          style={{ minWidth: 120 }}
+          style={{ flex: '1 1 100px' }}
         >
           {t('waiter.payLink')}
         </Button>
@@ -314,7 +320,14 @@ export function WaiterOrderPage() {
             >
               <List.Item.Meta
                 title={`${item.quantity}× ${item.nameSnapshot}`}
-                description={formatMoney(itemLineTotalTiyns(item))}
+                description={
+                  <Space size={8} wrap>
+                    <span>{formatMoney(itemLineTotalTiyns(item))}</span>
+                    {item.productionCenter ? (
+                      <Tag>{centerLabel(item.productionCenter)}</Tag>
+                    ) : null}
+                  </Space>
+                }
               />
             </List.Item>
           )}
@@ -330,6 +343,9 @@ export function WaiterOrderPage() {
                 description={
                   <Space>
                     <Tag>{item.status}</Tag>
+                    {item.productionCenter ? (
+                      <Tag color="blue">{centerLabel(item.productionCenter)}</Tag>
+                    ) : null}
                     <span>{formatMoney(itemLineTotalTiyns(item))}</span>
                   </Space>
                 }

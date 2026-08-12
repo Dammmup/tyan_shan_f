@@ -24,9 +24,10 @@ import { IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { menuApi } from '../../api/endpoints';
 import { formatMoney, tengeToTiyns, tiynsToTenge } from '../../utils/money';
+import { centerLabel } from '../../utils/centers';
 import type { Category, Product, ProductionCenter } from '../../types';
 
-const CENTERS: ProductionCenter[] = ['KITCHEN', 'BAR', 'GRILL', 'DESSERT', 'OTHER'];
+const CENTERS: ProductionCenter[] = ['COLD', 'KITCHEN', 'BAR', 'GRILL', 'DESSERT', 'OTHER'];
 
 export function MenuPage() {
   const { t } = useTranslation();
@@ -66,7 +67,7 @@ export function MenuPage() {
   });
 
   const centerOptions = useMemo(
-    () => CENTERS.map((c) => ({ value: c, label: c })),
+    () => CENTERS.map((c) => ({ value: c, label: centerLabel(c) })),
     [],
   );
 
@@ -272,7 +273,7 @@ export function MenuPage() {
                       {formatMoney(p.priceTiyns ?? p.basePriceTiyns ?? 0)}
                     </Table.Td>
                     <Table.Td>
-                      <Badge variant="light">{p.productionCenter}</Badge>
+                      <Badge variant="light">{centerLabel(p.productionCenter)}</Badge>
                     </Table.Td>
                     <Table.Td>
                       <Switch
