@@ -208,9 +208,19 @@ export function EmployeesPage() {
                     </Badge>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={emp.hasPin ? 'teal' : 'orange'} variant="light">
-                      {emp.hasPin ? t('admin.pinSet') : t('admin.pinMissing')}
-                    </Badge>
+                    {emp.pinCode ? (
+                      <Text fw={700} ff="monospace" size="lg" style={{ letterSpacing: 2 }}>
+                        {emp.pinCode}
+                      </Text>
+                    ) : emp.hasPin ? (
+                      <Badge color="gray" variant="light">
+                        {t('admin.pinHidden')}
+                      </Badge>
+                    ) : (
+                      <Badge color="orange" variant="light">
+                        {t('admin.pinMissing')}
+                      </Badge>
+                    )}
                   </Table.Td>
                   <Table.Td>
                     <Group gap={6} justify="flex-end">
@@ -261,9 +271,11 @@ export function EmployeesPage() {
               label="PIN"
               description={
                 editing
-                  ? editing.hasPin
-                    ? t('admin.pinEditHintSet')
-                    : t('admin.pinEditHintMissing')
+                  ? editing.pinCode
+                    ? t('admin.pinEditHintKnown', { pin: editing.pinCode })
+                    : editing.hasPin
+                      ? t('admin.pinEditHintSet')
+                      : t('admin.pinEditHintMissing')
                   : t('admin.pinCreateHint')
               }
               placeholder="1111"

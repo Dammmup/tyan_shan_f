@@ -122,6 +122,8 @@ export interface Employee {
   status: UserStatus;
   restaurantId?: string | null;
   hasPin?: boolean;
+  /** Visible to owner/admin only. */
+  pinCode?: string | null;
 }
 
 export interface Product {

@@ -198,8 +198,10 @@
     "selectShift": "Select a shift in the table",
     "pinSet": "PIN set",
     "pinMissing": "No PIN",
-    "pinCreateHint": "Digits are visible while typing. Min 4. For PIN login.",
-    "pinEditHintSet": "PIN already set. Enter a new one to replace (min 4), or leave blank.",
+    "pinHidden": "Set — re-enter to reveal",
+    "pinCreateHint": "Min 4 digits. PIN will be visible in the employee list.",
+    "pinEditHintSet": "PIN is set but the old code was not stored. Enter a new one (min 4), or leave blank.",
+    "pinEditHintKnown": "Current PIN: {{pin}}. Enter a new one to replace, or leave blank.",
     "pinEditHintMissing": "PIN not set yet. Enter at least 4 digits."
   },
   "availability": {
