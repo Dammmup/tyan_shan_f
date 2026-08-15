@@ -35,7 +35,7 @@ export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard'],
-    queryFn: reportsApi.dashboard,
+    queryFn: () => reportsApi.dashboard(),
     refetchInterval: 15000,
   });
 

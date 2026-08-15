@@ -63,7 +63,7 @@ export function CashierPage() {
 
   const paidTodayQuery = useQuery({
     queryKey: ['dashboard', 'cashier-paid'],
-    queryFn: reportsApi.dashboard,
+    queryFn: () => reportsApi.dashboard(),
     refetchInterval: 20000,
   });
 
