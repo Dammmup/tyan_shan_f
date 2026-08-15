@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import {
   AppShell,
   Burger,
@@ -68,6 +68,7 @@ export function AdminLayout() {
   };
 
   const asideCollapsed = !isMobile && collapsed;
+  const asideOffsetPx = isMobile ? 0 : asideCollapsed ? 80 : 260;
 
   return (
     <AppShell
@@ -78,11 +79,17 @@ export function AdminLayout() {
         collapsed: { mobile: !opened },
       }}
       padding="md"
+      style={
+        {
+          ['--admin-aside-offset']: `${asideOffsetPx}px`,
+        } as CSSProperties
+      }
       styles={{
         main: {
           background:
             'radial-gradient(ellipse at top left, rgba(31,111,91,0.08), transparent 45%), linear-gradient(180deg, #f3eee4 0%, #ebe4d8 100%)',
           minHeight: '100vh',
+          paddingBottom: location.pathname.startsWith('/admin/floor') ? 96 : undefined,
         },
         header: {
           background: 'linear-gradient(90deg, #143d34, #1f6f5b)',

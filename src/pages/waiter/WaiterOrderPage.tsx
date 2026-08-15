@@ -380,10 +380,10 @@ export function WaiterOrderPage() {
       </div>
 
       <div
-        className="staff-bottom-bar"
+        className={`staff-bottom-bar${embedded ? ' staff-bottom-bar--admin' : ''}`}
         style={{
           position: 'fixed',
-          left: 0,
+          left: embedded ? 'var(--admin-aside-offset, 0px)' : 0,
           right: 0,
           bottom: 0,
           zIndex: 100,
@@ -392,7 +392,8 @@ export function WaiterOrderPage() {
           display: 'flex',
           flexWrap: 'wrap',
           gap: 8,
-          maxWidth: '100vw',
+          maxWidth: embedded ? 'none' : '100vw',
+          boxSizing: 'border-box',
         }}
       >
         <Button size="large" style={{ flex: '1 1 140px' }} onClick={() => setCartOpen(true)}>
