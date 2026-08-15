@@ -140,8 +140,10 @@ export interface Product {
 
 export interface OrderItemModifier {
   modifierId: string;
-  name: string;
-  priceTiyns: number;
+  name?: string;
+  nameSnapshot?: string;
+  priceTiyns?: number;
+  priceSnapshot?: number;
 }
 
 export interface OrderItem {

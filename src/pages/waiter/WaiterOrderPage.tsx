@@ -689,9 +689,10 @@ export function WaiterOrderPage() {
             overflow: 'auto',
             padding: 16,
             background: '#f7f3ea',
+            borderRadius: 0,
           },
-          content: { borderRadius: 0, height: '100vh' },
         }}
+        rootClassName="precheck-preview-modal"
         title={
           <span style={{ fontFamily: 'Fraunces, serif' }}>
             {t('waiter.precheckPreview')}
