@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { Descriptions, Table, Tabs, Typography } from 'antd';
+import { DatePicker, Descriptions, Space, Table, Tabs, Typography } from 'antd';
+import dayjs, { type Dayjs } from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { reportsApi, shiftsApi } from '../../api/endpoints';
@@ -10,12 +11,17 @@ const { Title, Text } = Typography;
 
 function ReportTable({
   queryKey,
+  date,
   fetcher,
 }: {
   queryKey: string;
-  fetcher: () => Promise<{ label: string; count?: number; amountTiyns: number }[]>;
+  date: string;
+  fetcher: (date: string) => Promise<{ label: string; count?: number; amountTiyns: number }[]>;
 }) {
-  const { data, isLoading } = useQuery({ queryKey: ['reports', queryKey], queryFn: fetcher });
+  const { data, isLoading } = useQuery({
+    queryKey: ['reports', queryKey, date],
+    queryFn: () => fetcher(date),
+  });
   return (
     <Table
       rowKey={(r) => r.label}
@@ -135,28 +141,51 @@ function ShiftsReport() {
 
 export function ReportsPage() {
   const { t } = useTranslation();
+  const [day, setDay] = useState<Dayjs>(() => dayjs());
+  const date = day.format('YYYY-MM-DD');
 
   return (
     <div>
-      <Title level={3} style={{ fontFamily: 'Fraunces, serif', marginTop: 0 }}>
-        {t('admin.reports')}
-      </Title>
+      <Space wrap style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+        <Title level={3} style={{ fontFamily: 'Fraunces, serif', margin: 0 }}>
+          {t('admin.reports')}
+        </Title>
+        <Space>
+          <Text type="secondary">{t('admin.reportDate')}</Text>
+          <DatePicker
+            value={day}
+            onChange={(v) => v && setDay(v)}
+            allowClear={false}
+            format="DD.MM.YYYY"
+            disabledDate={(d) => d.isAfter(dayjs(), 'day')}
+          />
+        </Space>
+      </Space>
+      <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+        {t('admin.reportDateHint')}
+      </Text>
       <Tabs
         items={[
           {
             key: 'waiters',
             label: t('admin.reportWaiters'),
-            children: <ReportTable queryKey="waiters" fetcher={reportsApi.waiters} />,
+            children: (
+              <ReportTable queryKey="waiters" date={date} fetcher={reportsApi.waiters} />
+            ),
           },
           {
             key: 'products',
             label: t('admin.reportProducts'),
-            children: <ReportTable queryKey="products" fetcher={reportsApi.products} />,
+            children: (
+              <ReportTable queryKey="products" date={date} fetcher={reportsApi.products} />
+            ),
           },
           {
             key: 'payments',
             label: t('admin.reportPayments'),
-            children: <ReportTable queryKey="payments" fetcher={reportsApi.payments} />,
+            children: (
+              <ReportTable queryKey="payments" date={date} fetcher={reportsApi.payments} />
+            ),
           },
           {
             key: 'shifts',

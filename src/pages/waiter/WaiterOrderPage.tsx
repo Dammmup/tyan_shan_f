@@ -32,6 +32,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
+import { ReleaseTableModal } from '../../components/ReleaseTableModal';
 import { SetPrepaidModal } from '../../components/SetPrepaidModal';
 import { StaffHeader } from '../../components/StaffHeader';
 import { menuApi, ordersApi, tablesApi } from '../../api/endpoints';
@@ -42,10 +43,10 @@ import {
   canApplyDiscount,
   canCancelOrderItem,
   canCancelWholeOrder,
+  isAdminRole,
   isElevatedFloor,
 } from '../../utils/roles';
 import {
-  cashierHome,
   isAdminEmbeddedFloor,
   waiterHome,
   waiterOrderPath,
@@ -67,6 +68,8 @@ export function WaiterOrderPage() {
   const embedded = isAdminEmbeddedFloor(location.pathname);
   const allowDiscount = canApplyDiscount(user);
   const elevated = isElevatedFloor(user?.role);
+  const isAdmin = isAdminRole(user?.role);
+  const canReprintPrecheck = isAdmin;
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [product, setProduct] = useState<Product | null>(null);
   const [qty, setQty] = useState(1);
@@ -79,6 +82,7 @@ export function WaiterOrderPage() {
   const [targetTableId, setTargetTableId] = useState<string | undefined>();
   const [prepaidOpen, setPrepaidOpen] = useState(false);
   const [precheckPreviewOpen, setPrecheckPreviewOpen] = useState(false);
+  const [releaseOpen, setReleaseOpen] = useState(false);
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId],
@@ -153,7 +157,17 @@ export function WaiterOrderPage() {
       setCartOpen(false);
       await invalidate();
     },
-    onError: () => message.error(t('app.error')),
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { message?: string | string[] } } })?.response?.data
+          ?.message;
+      const text = Array.isArray(msg) ? msg[0] : msg;
+      if (text && /precheck already/i.test(String(text))) {
+        message.warning(t('waiter.precheckOnce'));
+      } else {
+        message.error(t('app.error'));
+      }
+    },
   });
 
   const cancelOrderMutation = useMutation({
@@ -204,10 +218,20 @@ export function WaiterOrderPage() {
     () => (order?.items || []).filter((i) => i.status !== 'CANCELLED'),
     [order],
   );
+  const precheckDone = Boolean(order?.precheckPrintedAt);
+  const canPrintPrecheck =
+    Boolean(precheckItems.length) &&
+    order?.status !== 'PAID' &&
+    order?.status !== 'CANCELLED' &&
+    (!precheckDone || canReprintPrecheck);
 
   const openPrecheckPreview = () => {
     if (!precheckItems.length) {
       message.warning(t('waiter.emptyCart'));
+      return;
+    }
+    if (precheckDone && !canReprintPrecheck) {
+      message.warning(t('waiter.precheckOnce'));
       return;
     }
     setPrecheckPreviewOpen(true);
@@ -422,12 +446,12 @@ export function WaiterOrderPage() {
         <Button
           size="large"
           icon={<FileTextOutlined />}
-          disabled={!order?.items?.length}
+          disabled={!canPrintPrecheck}
           loading={false}
           onClick={openPrecheckPreview}
           style={{ flex: '1 1 100px' }}
         >
-          {t('waiter.precheck')}
+          {precheckDone && !canReprintPrecheck ? t('waiter.precheckDone') : t('waiter.precheck')}
         </Button>
         <Button
           size="large"
@@ -450,14 +474,18 @@ export function WaiterOrderPage() {
         >
           {t('waiter.transfer')}
         </Button>
-        <Button
-          size="large"
-          icon={<WalletOutlined />}
-          onClick={() => navigate(`${cashierHome(user?.role)}?orderId=${orderId}`)}
-          style={{ flex: '1 1 100px' }}
-        >
-          {t('waiter.payLink')}
-        </Button>
+        {isAdmin && (
+          <Button
+            size="large"
+            type="primary"
+            icon={<WalletOutlined />}
+            disabled={order?.status === 'PAID' || order?.status === 'CANCELLED'}
+            onClick={() => setReleaseOpen(true)}
+            style={{ flex: '1 1 120px' }}
+          >
+            {t('waiter.releaseTable')}
+          </Button>
+        )}
       </div>
 
       <Modal
@@ -669,12 +697,24 @@ export function WaiterOrderPage() {
             size="large"
             icon={<FileTextOutlined />}
             block
-            disabled={!order?.items?.length}
+            disabled={!canPrintPrecheck}
             onClick={openPrecheckPreview}
             style={{ marginTop: 8 }}
           >
-            {t('waiter.precheck')}
+            {precheckDone && !canReprintPrecheck ? t('waiter.precheckDone') : t('waiter.precheck')}
           </Button>
+          {isAdmin && (
+            <Button
+              size="large"
+              icon={<WalletOutlined />}
+              block
+              disabled={order?.status === 'PAID' || order?.status === 'CANCELLED'}
+              onClick={() => setReleaseOpen(true)}
+              style={{ marginTop: 8 }}
+            >
+              {t('waiter.releaseTable')}
+            </Button>
+          )}
         </Flex>
       </Drawer>
 
@@ -810,6 +850,7 @@ export function WaiterOrderPage() {
             block
             icon={<FileTextOutlined />}
             loading={precheckMutation.isPending}
+            disabled={!canPrintPrecheck}
             onClick={() => precheckMutation.mutate()}
             style={{ height: 52 }}
           >
@@ -867,6 +908,14 @@ export function WaiterOrderPage() {
         order={order}
         onClose={() => setPrepaidOpen(false)}
       />
+      {order && (
+        <ReleaseTableModal
+          open={releaseOpen}
+          order={order}
+          onClose={() => setReleaseOpen(false)}
+          onPaid={() => navigate(waiterHome(user?.role))}
+        />
+      )}
     </div>
   );
 }

@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Button, Col, List, Row, Spin, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ordersApi, reportsApi } from '../../api/endpoints';
+import { reportsApi } from '../../api/endpoints';
 import { formatMoney } from '../../utils/money';
-import { formatElapsed } from '../../utils/time';
+import { formatDateTime, formatElapsed } from '../../utils/time';
 import { waiterHome, waiterOrderPath } from '../../utils/paths';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -36,14 +36,13 @@ export function DashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: reportsApi.dashboard,
-  });
-  const openOrders = useQuery({
-    queryKey: ['orders', 'open-dashboard'],
-    queryFn: () => ordersApi.list({ open: true }),
     refetchInterval: 15000,
   });
 
   if (isLoading) return <Spin />;
+
+  const openOrders = data?.openOrders || [];
+  const paidOrders = data?.paidOrders || [];
 
   return (
     <div>
@@ -70,15 +69,39 @@ export function DashboardPage() {
 
       <div style={{ marginTop: 28 }}>
         <Title level={4} style={{ fontFamily: 'Fraunces, serif' }}>
+          {t('admin.paidToday')}
+        </Title>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          {t('admin.paidTodayHint')}
+        </Text>
+        <List
+          locale={{ emptyText: t('app.empty') }}
+          dataSource={paidOrders}
+          renderItem={(order) => (
+            <List.Item>
+              <List.Item.Meta
+                title={`#${order.number ?? String(order._id).slice(-4)} · ${order.tableName || '—'} · ${order.waiterName || '—'}`}
+                description={
+                  order.paidAt
+                    ? `${formatMoney(order.totalTiyns || 0)} · ${formatDateTime(order.paidAt)}`
+                    : formatMoney(order.totalTiyns || 0)
+                }
+              />
+            </List.Item>
+          )}
+        />
+      </div>
+
+      <div style={{ marginTop: 28 }}>
+        <Title level={4} style={{ fontFamily: 'Fraunces, serif' }}>
           {t('admin.openTables')}
         </Title>
         <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
           {t('admin.openTablesHint')}
         </Text>
         <List
-          loading={openOrders.isLoading}
           locale={{ emptyText: t('app.empty') }}
-          dataSource={openOrders.data || []}
+          dataSource={openOrders}
           renderItem={(order) => (
             <List.Item
               actions={[
@@ -92,7 +115,7 @@ export function DashboardPage() {
               ]}
             >
               <List.Item.Meta
-                title={`#${order.number ?? String(order._id).slice(-4)} · ${t(`orderStatus.${order.status}`, { defaultValue: order.status })}`}
+                title={`#${order.number ?? String(order._id).slice(-4)} · ${order.tableName || '—'} · ${t(`orderStatus.${order.status}`, { defaultValue: order.status })}`}
                 description={`${formatMoney(order.totalTiyns || 0)} · ${formatElapsed(order.createdAt)}`}
               />
             </List.Item>

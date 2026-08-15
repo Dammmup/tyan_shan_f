@@ -296,20 +296,29 @@ export const discountsApi = {
 };
 
 export const reportsApi = {
-  dashboard: () =>
-    api.get<DashboardStats>('/reports/dashboard/today').then((r) => r.data),
-  waiters: () =>
-    api.get<Array<{ _id: string; orders: number; revenueTiyns: number }>>('/reports/by-waiters').then((r) =>
-      r.data.map((row) => ({
-        label: String(row._id || '—'),
-        count: row.orders,
-        amountTiyns: row.revenueTiyns,
-      })),
-    ),
-  products: () =>
+  dashboard: (date?: string) =>
+    api
+      .get<DashboardStats>('/reports/dashboard/today', {
+        params: withRestaurant(date ? { date } : {}),
+      })
+      .then((r) => r.data),
+  waiters: (date?: string) =>
+    api
+      .get<Array<{ _id: string; orders: number; revenueTiyns: number }>>('/reports/by-waiters', {
+        params: withRestaurant(date ? { date } : {}),
+      })
+      .then((r) =>
+        r.data.map((row) => ({
+          label: String(row._id || '—'),
+          count: row.orders,
+          amountTiyns: row.revenueTiyns,
+        })),
+      ),
+  products: (date?: string) =>
     api
       .get<Array<{ _id: { name?: string }; qty: number; revenueTiyns: number }>>(
         '/reports/by-products',
+        { params: withRestaurant(date ? { date } : {}) },
       )
       .then((r) =>
         r.data.map((row) => ({
@@ -318,10 +327,11 @@ export const reportsApi = {
           amountTiyns: row.revenueTiyns,
         })),
       ),
-  payments: () =>
+  payments: (date?: string) =>
     api
       .get<Array<{ _id: string; count: number; amountTiyns: number }>>(
         '/reports/by-payment-methods',
+        { params: withRestaurant(date ? { date } : {}) },
       )
       .then((r) =>
         r.data.map((row) => ({
@@ -340,7 +350,7 @@ export const reportsApi = {
         paidOrders: number;
         cancelledOrders?: number;
         byMethod?: Record<string, { count: number; amountTiyns: number }>;
-      } | null>(`/reports/shifts/${id}`)
+      } | null>(`/reports/shifts/${id}`, { params: withRestaurant() })
       .then((r) => r.data),
 };
 

@@ -15,6 +15,7 @@ import {
   Row,
   Space,
   Spin,
+  Tabs,
   Typography,
   message,
 } from 'antd';
@@ -24,7 +25,7 @@ import { useSearchParams, useLocation } from 'react-router-dom';
 import { ApplyDiscountModal } from '../../components/ApplyDiscountModal';
 import { SetPrepaidModal } from '../../components/SetPrepaidModal';
 import { StaffHeader } from '../../components/StaffHeader';
-import { ordersApi, paymentsApi, shiftsApi } from '../../api/endpoints';
+import { ordersApi, paymentsApi, reportsApi, shiftsApi } from '../../api/endpoints';
 import { formatMoney, orderDueTiyns, tengeToTiyns, tiynsToTenge } from '../../utils/money';
 import { formatDateTime, formatElapsed } from '../../utils/time';
 import { canApplyDiscount } from '../../utils/roles';
@@ -42,6 +43,7 @@ export function CashierPage() {
   const embedded = isAdminEmbeddedFloor(location.pathname);
   const allowDiscount = canApplyDiscount(user);
   const [params] = useSearchParams();
+  const [listTab, setListTab] = useState<'open' | 'paid'>('open');
   const [selectedId, setSelectedId] = useState<string | undefined>(params.get('orderId') || undefined);
   const [method, setMethod] = useState<PaymentMethod>('CASH');
   const [receivedTenge, setReceivedTenge] = useState<number>(0);
@@ -57,6 +59,12 @@ export function CashierPage() {
   const ordersQuery = useQuery({
     queryKey: ['orders', 'open'],
     queryFn: () => ordersApi.list({ open: true }),
+  });
+
+  const paidTodayQuery = useQuery({
+    queryKey: ['dashboard', 'cashier-paid'],
+    queryFn: reportsApi.dashboard,
+    refetchInterval: 20000,
   });
 
   const shiftQuery = useQuery({
@@ -110,7 +118,11 @@ export function CashierPage() {
     },
     onSuccess: async () => {
       message.success(t('app.success'));
-      await queryClient.invalidateQueries({ queryKey: ['orders'] });
+      setListTab('paid');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      ]);
     },
     onError: () => message.error(t('app.error')),
   });
@@ -221,45 +233,83 @@ export function CashierPage() {
 
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={10}>
-            <Card title={t('cashier.openOrders')}>
-              {ordersQuery.isLoading ? (
-                <Spin />
-              ) : (
-                <List
-                  dataSource={ordersQuery.data || []}
-                  locale={{ emptyText: t('app.empty') }}
-                  renderItem={(order) => (
-                    <List.Item
-                      onClick={() => setSelectedId(order._id)}
-                      style={{
-                        cursor: 'pointer',
-                        background: selectedId === order._id ? 'rgba(31,111,91,0.1)' : undefined,
-                        borderRadius: 8,
-                        padding: 12,
-                      }}
-                    >
-                      <List.Item.Meta
-                        title={`#${order.number ?? order._id.slice(-4)} · ${order.tableName || ''}`}
-                        description={
-                          <>
-                            {t(`orderStatus.${order.status}`)}
-                            {order.createdAt
-                              ? ` · ${formatDateTime(order.createdAt)} (${formatElapsed(order.createdAt)})`
-                              : ''}
-                          </>
-                        }
+            <Card>
+              <Tabs
+                activeKey={listTab}
+                onChange={(k) => setListTab(k as 'open' | 'paid')}
+                items={[
+                  {
+                    key: 'open',
+                    label: t('cashier.openOrders'),
+                    children: ordersQuery.isLoading ? (
+                      <Spin />
+                    ) : (
+                      <List
+                        dataSource={ordersQuery.data || []}
+                        locale={{ emptyText: t('app.empty') }}
+                        renderItem={(order) => (
+                          <List.Item
+                            onClick={() => setSelectedId(order._id)}
+                            style={{
+                              cursor: 'pointer',
+                              background:
+                                selectedId === order._id ? 'rgba(31,111,91,0.1)' : undefined,
+                              borderRadius: 8,
+                              padding: 12,
+                            }}
+                          >
+                            <List.Item.Meta
+                              title={`#${order.number ?? order._id.slice(-4)} · ${order.tableName || ''}`}
+                              description={
+                                <>
+                                  {t(`orderStatus.${order.status}`)}
+                                  {order.createdAt
+                                    ? ` · ${formatDateTime(order.createdAt)} (${formatElapsed(order.createdAt)})`
+                                    : ''}
+                                </>
+                              }
+                            />
+                            <Text strong>{formatMoney(order.totalTiyns)}</Text>
+                          </List.Item>
+                        )}
                       />
-                      <Text strong>{formatMoney(order.totalTiyns)}</Text>
-                    </List.Item>
-                  )}
-                />
-              )}
+                    ),
+                  },
+                  {
+                    key: 'paid',
+                    label: t('cashier.paidToday'),
+                    children: paidTodayQuery.isLoading ? (
+                      <Spin />
+                    ) : (
+                      <List
+                        dataSource={paidTodayQuery.data?.paidOrders || []}
+                        locale={{ emptyText: t('app.empty') }}
+                        renderItem={(order) => (
+                          <List.Item style={{ padding: 12 }}>
+                            <List.Item.Meta
+                              title={`#${order.number ?? order._id.slice(-4)} · ${order.tableName || ''}`}
+                              description={
+                                order.paidAt
+                                  ? `${t('orderStatus.PAID')} · ${formatDateTime(order.paidAt)}`
+                                  : t('orderStatus.PAID')
+                              }
+                            />
+                            <Text strong>{formatMoney(order.totalTiyns)}</Text>
+                          </List.Item>
+                        )}
+                      />
+                    ),
+                  },
+                ]}
+              />
             </Card>
           </Col>
 
           <Col xs={24} lg={14}>
             <Card title={t('cashier.paymentForm')}>
-              {!selected ? (
+              {listTab === 'paid' ? (
+                <Text type="secondary">{t('cashier.paidTodayHint')}</Text>
+              ) : !selected ? (
                 <Text type="secondary">{t('cashier.selectOrder')}</Text>
               ) : (
                 <>

@@ -184,6 +184,23 @@ export interface Order {
   prepaidNote?: string;
   createdAt?: string;
   updatedAt?: string;
+  paidAt?: string | null;
+  precheckPrintedAt?: string | null;
+}
+
+export interface DashboardOrderSummary {
+  _id: string;
+  status: OrderStatus;
+  totalTiyns: number;
+  prepaidTiyns?: number;
+  guests?: number;
+  tableId: string;
+  tableName?: string;
+  waiterId?: string;
+  waiterName?: string;
+  createdAt?: string;
+  paidAt?: string | null;
+  number?: string;
 }
 
 export interface KitchenOrderItem {
@@ -261,6 +278,10 @@ export interface DashboardStats {
   ordersCount: number;
   avgCheckTiyns: number;
   guestsCount: number;
+  ordersOpen?: number;
+  ordersPaid?: number;
+  paidOrders?: DashboardOrderSummary[];
+  openOrders?: DashboardOrderSummary[];
 }
 
 export interface AuditLogEntry {
