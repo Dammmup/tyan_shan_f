@@ -1,65 +1,59 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import {
+  ActionIcon,
   AppShell,
-  Burger,
-  Button,
   Group,
-  NavLink,
-  ScrollArea,
-  Stack,
   Text,
-  Title,
+  Tooltip,
 } from '@mantine/core';
-import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import {
-  IconCash,
-  IconChartBar,
-  IconDiscount2,
-  IconLayoutDashboard,
+  IconArrowLeft,
+  IconLock,
   IconLogout,
-  IconMenu2,
-  IconPrinter,
+  IconRefresh,
   IconSettings,
-  IconShield,
-  IconToolsKitchen2,
-  IconUsers,
-  IconBuildingStore,
-  IconHistory,
-  IconSofa,
+  IconX,
 } from '@tabler/icons-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { shiftsApi } from '../api/endpoints';
 import { useAuthStore } from '../stores/authStore';
+import { formatDateTime } from '../utils/time';
 import { disconnectSocket } from '../websocket/socket';
+
+function formatNowRu(d: Date) {
+  return new Intl.DateTimeFormat('ru-RU', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d);
+}
 
 export function AdminLayout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const [opened, { toggle, close }] = useDisclosure();
-  const isMobile = useMediaQuery('(max-width: 900px)');
-  const [collapsed, setCollapsed] = useState(false);
 
-  const items = useMemo(
-    () => [
-      { key: '/admin', label: t('admin.dashboard'), icon: IconLayoutDashboard },
-      { key: '/admin/floor', label: t('waiter.title'), icon: IconSofa },
-      { key: '/admin/pos', label: t('cashier.title'), icon: IconCash },
-      { key: '/admin/kitchen-view', label: t('kitchen.title'), icon: IconToolsKitchen2 },
-      { key: '/admin/menu', label: t('admin.menu'), icon: IconToolsKitchen2 },
-      { key: '/admin/halls', label: t('admin.halls'), icon: IconBuildingStore },
-      { key: '/admin/employees', label: t('admin.employees'), icon: IconUsers },
-      { key: '/admin/roles', label: t('admin.roles'), icon: IconShield },
-      { key: '/admin/printers', label: t('admin.printers'), icon: IconPrinter },
-      { key: '/admin/discounts', label: t('admin.discounts'), icon: IconDiscount2 },
-      { key: '/admin/reports', label: t('admin.reports'), icon: IconChartBar },
-      { key: '/admin/audit', label: t('admin.audit'), icon: IconHistory },
-      { key: '/admin/settings', label: t('admin.settings'), icon: IconSettings },
-    ],
-    [t],
-  );
+  const isHub = location.pathname === '/admin' || location.pathname === '/admin/';
+  const onFloor =
+    location.pathname.startsWith('/admin/floor') ||
+    location.pathname.startsWith('/admin/pos') ||
+    location.pathname.startsWith('/admin/kitchen-view');
+
+  const shiftQuery = useQuery({
+    queryKey: ['shift', 'current'],
+    queryFn: shiftsApi.current,
+    refetchInterval: 30000,
+  });
+
+  const nowLabel = useMemo(() => formatNowRu(new Date()), [location.pathname]);
 
   const onLogout = async () => {
     disconnectSocket();
@@ -67,118 +61,131 @@ export function AdminLayout() {
     navigate('/login', { replace: true });
   };
 
-  const asideCollapsed = !isMobile && collapsed;
-  const asideOffsetPx = isMobile ? 0 : asideCollapsed ? 80 : 260;
+  const shift = shiftQuery.data;
+  const shiftOpen = Boolean(shift && shift.status === 'OPEN');
 
   return (
     <AppShell
-      header={{ height: 64 }}
-      navbar={{
-        width: asideCollapsed ? 80 : 260,
-        breakpoint: 'sm',
-        collapsed: { mobile: !opened },
-      }}
-      padding="md"
-      style={
-        {
-          ['--admin-aside-offset']: `${asideOffsetPx}px`,
-        } as CSSProperties
-      }
+      header={{ height: 48 }}
+      footer={{ height: 56 }}
+      padding={0}
+      style={{ ['--admin-aside-offset']: '0px' } as CSSProperties}
       styles={{
         main: {
-          background:
-            'radial-gradient(ellipse at top left, rgba(31,111,91,0.08), transparent 45%), linear-gradient(180deg, #f3eee4 0%, #ebe4d8 100%)',
+          background: '#d8d4cc',
           minHeight: '100vh',
-          paddingBottom: location.pathname.startsWith('/admin/floor') ? 96 : undefined,
+          paddingBottom: onFloor ? 96 : undefined,
         },
         header: {
-          background: 'linear-gradient(90deg, #143d34, #1f6f5b)',
+          background: '#2a2a2a',
           borderBottom: 'none',
         },
-        navbar: {
-          background: '#143d34',
-          borderInlineEnd: 'none',
+        footer: {
+          background: '#cfc9be',
+          borderTop: '1px solid #b8b2a6',
         },
       }}
     >
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
-            {isMobile ? (
-              <Burger opened={opened} onClick={toggle} color="#f4efe6" size="sm" />
-            ) : (
-              <Button
+        <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+          <Group gap="sm" wrap="nowrap">
+            {!isHub && (
+              <ActionIcon
                 variant="subtle"
                 color="gray"
                 c="#f4efe6"
-                onClick={() => setCollapsed((v) => !v)}
-                leftSection={<IconMenu2 size={18} />}
+                size="lg"
+                aria-label={t('app.back')}
+                onClick={() => navigate('/admin')}
               >
-                {asideCollapsed ? '' : t('app.name')}
-              </Button>
+                <IconArrowLeft size={20} />
+              </ActionIcon>
             )}
-            <Text c="#f4efe6" size="sm">
-              {user?.name} · {t(`roles.${user?.role}`, { defaultValue: user?.role })}
+            <Text c="#f4efe6" fw={700} style={{ letterSpacing: 0.5 }}>
+              {t('app.name')}
             </Text>
           </Group>
-          <Button
-            variant="light"
-            color="gray"
-            leftSection={<IconLogout size={16} />}
-            onClick={() => void onLogout()}
-          >
-            {t('app.logout')}
-          </Button>
+          <Text c="rgba(244,239,230,0.85)" size="sm" visibleFrom="sm">
+            {nowLabel}
+          </Text>
+          <Text c="rgba(244,239,230,0.9)" size="sm" lineClamp={1}>
+            {user?.name} · {t(`roles.${user?.role}`, { defaultValue: user?.role })}
+          </Text>
         </Group>
       </AppShell.Header>
-
-      <AppShell.Navbar p="sm">
-        <AppShell.Section mb="md" px="xs">
-          <Title order={3} c="#f4efe6" style={{ fontFamily: 'Fraunces, serif' }}>
-            {asideCollapsed ? 'TS' : t('app.name')}
-          </Title>
-          {!asideCollapsed && (
-            <Text size="xs" c="rgba(244,239,230,0.65)">
-              {t('app.tagline')}
-            </Text>
-          )}
-        </AppShell.Section>
-        <AppShell.Section grow component={ScrollArea}>
-          <Stack gap={4}>
-            {items.map((item) => {
-              const active =
-                item.key === '/admin'
-                  ? location.pathname === '/admin'
-                  : location.pathname.startsWith(item.key);
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.key}
-                  active={active}
-                  label={asideCollapsed ? undefined : item.label}
-                  leftSection={<Icon size={18} stroke={1.6} />}
-                  onClick={() => {
-                    navigate(item.key);
-                    close();
-                  }}
-                  color="teal"
-                  variant="filled"
-                  styles={{
-                    root: {
-                      borderRadius: 10,
-                      color: '#f4efe6',
-                    },
-                  }}
-                />
-              );
-            })}
-          </Stack>
-        </AppShell.Section>
-      </AppShell.Navbar>
 
       <AppShell.Main>
         <Outlet />
       </AppShell.Main>
+
+      <AppShell.Footer>
+        <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+          <Text size="sm" c="#3a3530">
+            {shiftOpen && shift?.openedAt
+              ? `${t('hub.shiftOpen')} ${formatDateTime(shift.openedAt)}`
+              : t('cashier.noShift')}
+          </Text>
+          <Group gap={8}>
+            <Tooltip label={t('hub.refresh')}>
+              <ActionIcon
+                size={40}
+                radius="sm"
+                style={{ background: '#3d6ea5' }}
+                c="#fff"
+                onClick={() => {
+                  void queryClient.invalidateQueries();
+                }}
+              >
+                <IconRefresh size={20} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('admin.settings')}>
+              <ActionIcon
+                size={40}
+                radius="sm"
+                style={{ background: '#3d6ea5' }}
+                c="#fff"
+                onClick={() => navigate('/admin/settings')}
+              >
+                <IconSettings size={20} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('app.logout')}>
+              <ActionIcon
+                size={40}
+                radius="sm"
+                style={{ background: '#b33a3a' }}
+                c="#fff"
+                onClick={() => void onLogout()}
+              >
+                <IconLogout size={20} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('hub.toHome')}>
+              <ActionIcon
+                size={40}
+                radius="sm"
+                style={{ background: '#b33a3a' }}
+                c="#fff"
+                onClick={() => navigate('/admin')}
+              >
+                <IconX size={20} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('hub.lock')}>
+              <ActionIcon
+                size={40}
+                radius="sm"
+                style={{ background: '#b33a3a' }}
+                c="#fff"
+                onClick={() => void onLogout()}
+              >
+                <IconLock size={20} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+        </Group>
+      </AppShell.Footer>
     </AppShell>
   );
 }

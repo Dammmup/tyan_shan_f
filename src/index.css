@@ -81,8 +81,8 @@ canvas {
   padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
-/* Inside admin shell: stay clear of the left navbar */
+/* Inside admin shell: full width (no sidebar) */
 .staff-bottom-bar--admin {
-  left: var(--admin-aside-offset, 260px);
+  left: var(--admin-aside-offset, 0px);
   width: auto;
 }

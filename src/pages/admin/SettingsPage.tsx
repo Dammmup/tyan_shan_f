@@ -4,6 +4,7 @@ import {
   Button,
   NumberInput,
   Radio,
+  SimpleGrid,
   Stack,
   Text,
   TextInput,
@@ -12,6 +13,7 @@ import {
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { restaurantsApi } from '../../api/endpoints';
 import { setAppLanguage } from '../../i18n';
 import { useAuthStore } from '../../stores/authStore';
@@ -25,6 +27,7 @@ type FormValues = {
 
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const restaurantId = useAuthStore((s) => s.restaurantId || s.user?.restaurantId || null);
 
@@ -78,8 +81,31 @@ export function SettingsPage() {
   });
 
   return (
-    <Stack gap="lg" maw={520}>
+    <Stack gap="lg" maw={640}>
       <Title order={2}>{t('admin.settings')}</Title>
+
+      <Stack gap="xs">
+        <Text fw={600}>{t('hub.configSection')}</Text>
+        <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
+          {[
+            { path: '/admin/menu', label: t('admin.menu') },
+            { path: '/admin/halls', label: t('admin.halls') },
+            { path: '/admin/printers', label: t('admin.printers') },
+            { path: '/admin/roles', label: t('admin.roles') },
+            { path: '/admin/discounts', label: t('admin.discounts') },
+            { path: '/admin/audit', label: t('admin.audit') },
+          ].map((item) => (
+            <Button
+              key={item.path}
+              variant="light"
+              color="teal"
+              onClick={() => navigate(item.path)}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </SimpleGrid>
+      </Stack>
 
       <Stack gap="xs">
         <Text fw={600}>{t('admin.languageHint')}</Text>

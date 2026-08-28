@@ -1,7 +1,7 @@
 import type { AppRole } from '../types';
 import { isAdminRole } from './roles';
 
-/** Floor paths: admin keeps sidebar under /admin/*; staff uses top-level routes. */
+/** Floor paths: admin uses /admin/* hub; staff uses top-level routes. */
 export function waiterHome(role?: AppRole | null): string {
   return isAdminRole(role) ? '/admin/floor' : '/waiter';
 }

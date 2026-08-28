@@ -1,130 +1,136 @@
-import { useQuery } from '@tanstack/react-query';
-import { Button, Col, List, Row, Spin, Typography } from 'antd';
+import { SimpleGrid, Stack, Text } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { reportsApi } from '../../api/endpoints';
-import { formatMoney } from '../../utils/money';
-import { formatDateTime, formatElapsed } from '../../utils/time';
-import { waiterHome, waiterOrderPath } from '../../utils/paths';
-import { useAuthStore } from '../../stores/authStore';
 
-const { Title, Text } = Typography;
+type HubTile = {
+  key: string;
+  labelKey: string;
+  path: string;
+};
 
-function StatTile({ label, value }: { label: string; value: string }) {
+type HubGroup = {
+  key: string;
+  titleKey: string;
+  color: string;
+  tiles: HubTile[];
+};
+
+const GROUPS: HubGroup[] = [
+  {
+    key: 'order',
+    titleKey: 'hub.groupOrder',
+    color: '#5f8f4e',
+    tiles: [
+      { key: 'create', labelKey: 'hub.createOrder', path: '/admin/floor' },
+      { key: 'edit', labelKey: 'hub.editOrder', path: '/admin/floor' },
+      { key: 'quick', labelKey: 'hub.quickCheck', path: '/admin/pos' },
+      { key: 'reserve', labelKey: 'hub.reservation', path: '/admin/halls' },
+      { key: 'tariffs', labelKey: 'hub.tariffs', path: '/admin/discounts' },
+      { key: 'control', labelKey: 'hub.orderControl', path: '/admin/kitchen-view' },
+    ],
+  },
+  {
+    key: 'shift',
+    titleKey: 'hub.groupShift',
+    color: '#b39a72',
+    tiles: [
+      { key: 'closeCash', labelKey: 'hub.closeCashShift', path: '/admin/pos' },
+      { key: 'closeCommon', labelKey: 'hub.closeCommonShift', path: '/admin/pos' },
+      { key: 'cashOut', labelKey: 'hub.cashCollection', path: '/admin/pos' },
+      { key: 'cashIn', labelKey: 'hub.cashFloat', path: '/admin/pos' },
+      { key: 'cashReports', labelKey: 'hub.cashReports', path: '/admin/reports' },
+      { key: 'viewReports', labelKey: 'hub.viewReports', path: '/admin/reports' },
+    ],
+  },
+  {
+    key: 'staff',
+    titleKey: 'hub.groupStaff',
+    color: '#3a6ea5',
+    tiles: [
+      { key: 'bonus', labelKey: 'hub.bonuses', path: '/admin/employees' },
+      { key: 'register', labelKey: 'hub.staffRegister', path: '/admin/employees' },
+      { key: 'time', labelKey: 'hub.timeTracking', path: '/admin/audit' },
+    ],
+  },
+  {
+    key: 'ops',
+    titleKey: 'hub.groupOps',
+    color: '#8b3a4a',
+    tiles: [
+      { key: 'closedChecks', labelKey: 'hub.closedChecks', path: '/admin/pos' },
+      { key: 'closedOrders', labelKey: 'hub.closedOrders', path: '/admin/reports' },
+      { key: 'visits', labelKey: 'hub.visits', path: '/admin/audit' },
+    ],
+  },
+];
+
+function TileButton({
+  label,
+  color,
+  onClick,
+}: {
+  label: string;
+  color: string;
+  onClick: () => void;
+}) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       style={{
-        background: 'linear-gradient(145deg, #143d34, #1f6f5b)',
-        color: '#f4efe6',
-        borderRadius: 14,
-        padding: 20,
-        minHeight: 120,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 72,
+        padding: '12px 10px',
+        border: 'none',
+        borderRadius: 4,
+        background: color,
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: 15,
+        lineHeight: 1.25,
+        textAlign: 'center',
+        cursor: 'pointer',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
       }}
     >
-      <Text style={{ color: 'rgba(244,239,230,0.75)' }}>{label}</Text>
-      <Title level={2} style={{ color: '#fff', margin: '8px 0 0', fontFamily: 'Fraunces, serif' }}>
-        {value}
-      </Title>
-    </div>
+      {label}
+    </button>
   );
 }
 
 export function DashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
-  const { data, isLoading } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => reportsApi.dashboard(),
-    refetchInterval: 15000,
-  });
 
-  if (isLoading) return <Spin />;
+  const left = GROUPS.filter((g) => g.key === 'order' || g.key === 'staff');
+  const right = GROUPS.filter((g) => g.key === 'shift' || g.key === 'ops');
 
-  const openOrders = data?.openOrders || [];
-  const paidOrders = data?.paidOrders || [];
+  const renderGroup = (group: HubGroup) => (
+    <Stack key={group.key} gap={8} mb="lg">
+      <Text size="sm" c="#4a453f" fw={600}>
+        {t(group.titleKey)}
+      </Text>
+      <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={10}>
+        {group.tiles.map((tile) => (
+          <TileButton
+            key={tile.key}
+            label={t(tile.labelKey)}
+            color={group.color}
+            onClick={() => navigate(tile.path)}
+          />
+        ))}
+      </SimpleGrid>
+    </Stack>
+  );
 
   return (
-    <div>
-      <Title level={3} style={{ fontFamily: 'Fraunces, serif', marginTop: 0 }}>
-        {t('admin.dashboard')}
-      </Title>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <StatTile
-            label={t('admin.revenueToday')}
-            value={formatMoney(data?.revenueTodayTiyns || 0)}
-          />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatTile label={t('admin.ordersToday')} value={String(data?.ordersCount || 0)} />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatTile label={t('admin.avgCheck')} value={formatMoney(data?.avgCheckTiyns || 0)} />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatTile label={t('admin.guestsToday')} value={String(data?.guestsCount || 0)} />
-        </Col>
-      </Row>
-
-      <div style={{ marginTop: 28 }}>
-        <Title level={4} style={{ fontFamily: 'Fraunces, serif' }}>
-          {t('admin.paidToday')}
-        </Title>
-        <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-          {t('admin.paidTodayHint')}
-        </Text>
-        <List
-          locale={{ emptyText: t('app.empty') }}
-          dataSource={paidOrders}
-          renderItem={(order) => (
-            <List.Item>
-              <List.Item.Meta
-                title={`#${order.number ?? String(order._id).slice(-4)} · ${order.tableName || '—'} · ${order.waiterName || '—'}`}
-                description={
-                  order.paidAt
-                    ? `${formatMoney(order.totalTiyns || 0)} · ${formatDateTime(order.paidAt)}`
-                    : formatMoney(order.totalTiyns || 0)
-                }
-              />
-            </List.Item>
-          )}
-        />
-      </div>
-
-      <div style={{ marginTop: 28 }}>
-        <Title level={4} style={{ fontFamily: 'Fraunces, serif' }}>
-          {t('admin.openTables')}
-        </Title>
-        <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-          {t('admin.openTablesHint')}
-        </Text>
-        <List
-          locale={{ emptyText: t('app.empty') }}
-          dataSource={openOrders}
-          renderItem={(order) => (
-            <List.Item
-              actions={[
-                <Button
-                  key="open"
-                  type="primary"
-                  onClick={() => navigate(waiterOrderPath(order._id, user?.role))}
-                >
-                  {t('waiter.openOrder')}
-                </Button>,
-              ]}
-            >
-              <List.Item.Meta
-                title={`#${order.number ?? String(order._id).slice(-4)} · ${order.tableName || '—'} · ${t(`orderStatus.${order.status}`, { defaultValue: order.status })}`}
-                description={`${formatMoney(order.totalTiyns || 0)} · ${formatElapsed(order.createdAt)}`}
-              />
-            </List.Item>
-          )}
-        />
-        <Button size="large" style={{ marginTop: 8 }} onClick={() => navigate(waiterHome(user?.role))}>
-          {t('waiter.title')}
-        </Button>
-      </div>
+    <div style={{ padding: 16, maxWidth: 1100, margin: '0 auto' }}>
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: 8, md: 28 }}>
+        <div>{left.map(renderGroup)}</div>
+        <div>{right.map(renderGroup)}</div>
+      </SimpleGrid>
     </div>
   );
 }
