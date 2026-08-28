@@ -86,3 +86,20 @@ canvas {
   left: var(--admin-aside-offset, 0px);
   width: auto;
 }
+
+/* Precheck: one scroll area, actions stay visible (no nested page scroll) */
+.precheck-preview-modal .ant-modal {
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+  top: 0;
+}
+
+.precheck-preview-modal .ant-modal-wrap {
+  overflow: hidden;
+}
+
+.precheck-preview-modal .ant-modal-content {
+  height: 100dvh;
+  max-height: 100dvh;
+}

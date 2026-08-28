@@ -410,7 +410,7 @@ export function WaiterOrderPage() {
           left: embedded ? 'var(--admin-aside-offset, 0px)' : 0,
           right: 0,
           bottom: 0,
-          zIndex: 100,
+          zIndex: 300,
           padding: 10,
           background: 'rgba(20,61,52,0.95)',
           display: 'flex',
@@ -725,15 +725,33 @@ export function WaiterOrderPage() {
         width="100%"
         style={{ top: 0, maxWidth: '100vw', paddingBottom: 0, margin: 0 }}
         styles={{
+          content: {
+            height: '100dvh',
+            maxHeight: '100dvh',
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: 0,
+            padding: 0,
+            overflow: 'hidden',
+          },
+          header: {
+            margin: 0,
+            padding: '12px 16px',
+            flexShrink: 0,
+          },
           body: {
-            height: 'calc(100vh - 55px)',
-            overflow: 'auto',
-            padding: 16,
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            padding: 0,
             background: '#f7f3ea',
             borderRadius: 0,
           },
         }}
         rootClassName="precheck-preview-modal"
+        zIndex={1200}
         title={
           <span style={{ fontFamily: 'Fraunces, serif' }}>
             {t('waiter.precheckPreview')}
@@ -743,100 +761,112 @@ export function WaiterOrderPage() {
         }
         destroyOnClose
       >
-        <List
-          dataSource={precheckItems}
-          locale={{ emptyText: t('waiter.emptyCart') }}
-          renderItem={(item) => {
-            const mods = (item.modifiers || [])
-              .map((m) => m.name || m.nameSnapshot || '')
-              .filter(Boolean)
-              .join(', ');
-            return (
-              <List.Item style={{ padding: '12px 0', borderColor: 'rgba(20,61,52,0.12)' }}>
-                <Flex justify="space-between" align="flex-start" style={{ width: '100%', gap: 12 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <Text strong style={{ fontSize: 17 }}>
-                      {item.quantity}× {item.nameSnapshot}
-                    </Text>
-                    {mods ? (
-                      <Text type="secondary" style={{ display: 'block', fontSize: 13 }}>
-                        {mods}
-                      </Text>
-                    ) : null}
-                    {item.note ? (
-                      <Text type="secondary" style={{ display: 'block', fontSize: 13 }}>
-                        {item.note}
-                      </Text>
-                    ) : null}
-                  </div>
-                  <Text strong style={{ fontSize: 16, whiteSpace: 'nowrap' }}>
-                    {formatMoney(itemLineTotalTiyns(item))}
-                  </Text>
-                </Flex>
-              </List.Item>
-            );
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            padding: 16,
+            paddingBottom: 8,
           }}
-        />
+        >
+          <List
+            dataSource={precheckItems}
+            locale={{ emptyText: t('waiter.emptyCart') }}
+            renderItem={(item) => {
+              const mods = (item.modifiers || [])
+                .map((m) => m.name || m.nameSnapshot || '')
+                .filter(Boolean)
+                .join(', ');
+              return (
+                <List.Item style={{ padding: '12px 0', borderColor: 'rgba(20,61,52,0.12)' }}>
+                  <Flex justify="space-between" align="flex-start" style={{ width: '100%', gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Text strong style={{ fontSize: 17 }}>
+                        {item.quantity}× {item.nameSnapshot}
+                      </Text>
+                      {mods ? (
+                        <Text type="secondary" style={{ display: 'block', fontSize: 13 }}>
+                          {mods}
+                        </Text>
+                      ) : null}
+                      {item.note ? (
+                        <Text type="secondary" style={{ display: 'block', fontSize: 13 }}>
+                          {item.note}
+                        </Text>
+                      ) : null}
+                    </div>
+                    <Text strong style={{ fontSize: 16, whiteSpace: 'nowrap' }}>
+                      {formatMoney(itemLineTotalTiyns(item))}
+                    </Text>
+                  </Flex>
+                </List.Item>
+              );
+            }}
+          />
 
-        <Divider style={{ margin: '16px 0' }} />
+          <Divider style={{ margin: '16px 0' }} />
 
-        <Flex vertical gap={10}>
-          <Flex justify="space-between">
-            <Text type="secondary" style={{ fontSize: 16 }}>
-              {t('waiter.subtotal')}
-            </Text>
-            <Text style={{ fontSize: 16 }}>{formatMoney(order?.subtotalTiyns || 0)}</Text>
-          </Flex>
-          {(order?.discountTiyns || 0) > 0 && (
+          <Flex vertical gap={10}>
             <Flex justify="space-between">
               <Text type="secondary" style={{ fontSize: 16 }}>
-                {t('waiter.discount')}
+                {t('waiter.subtotal')}
               </Text>
-              <Text style={{ fontSize: 16 }}>−{formatMoney(order?.discountTiyns || 0)}</Text>
+              <Text style={{ fontSize: 16 }}>{formatMoney(order?.subtotalTiyns || 0)}</Text>
             </Flex>
-          )}
-          <Flex justify="space-between">
-            <Text type="secondary" style={{ fontSize: 16 }}>
-              {t('waiter.service')}
-            </Text>
-            <Text style={{ fontSize: 16 }}>{formatMoney(order?.serviceChargeTiyns || 0)}</Text>
-          </Flex>
-          <Flex justify="space-between" align="center">
-            <Text strong style={{ fontSize: 18 }}>
-              {t('waiter.total')}
-            </Text>
-            <Text strong style={{ fontSize: 20 }}>
-              {formatMoney(order?.totalTiyns || 0)}
-            </Text>
-          </Flex>
-          {(order?.prepaidTiyns || 0) > 0 && (
-            <>
+            {(order?.discountTiyns || 0) > 0 && (
               <Flex justify="space-between">
                 <Text type="secondary" style={{ fontSize: 16 }}>
-                  {t('waiter.prepaid')}
+                  {t('waiter.discount')}
                 </Text>
-                <Text style={{ fontSize: 16 }}>−{formatMoney(order?.prepaidTiyns || 0)}</Text>
+                <Text style={{ fontSize: 16 }}>−{formatMoney(order?.discountTiyns || 0)}</Text>
               </Flex>
-              <Flex justify="space-between" align="center">
-                <Text strong style={{ fontSize: 18 }}>
-                  {t('waiter.due')}
-                </Text>
-                <Title level={2} style={{ margin: 0, color: '#1f6f5b', fontFamily: 'Fraunces, serif' }}>
-                  {formatMoney(orderDueTiyns(order || {}))}
-                </Title>
-              </Flex>
-            </>
-          )}
-        </Flex>
+            )}
+            <Flex justify="space-between">
+              <Text type="secondary" style={{ fontSize: 16 }}>
+                {t('waiter.service')}
+              </Text>
+              <Text style={{ fontSize: 16 }}>{formatMoney(order?.serviceChargeTiyns || 0)}</Text>
+            </Flex>
+            <Flex justify="space-between" align="center">
+              <Text strong style={{ fontSize: 18 }}>
+                {t('waiter.total')}
+              </Text>
+              <Text strong style={{ fontSize: 20 }}>
+                {formatMoney(order?.totalTiyns || 0)}
+              </Text>
+            </Flex>
+            {(order?.prepaidTiyns || 0) > 0 && (
+              <>
+                <Flex justify="space-between">
+                  <Text type="secondary" style={{ fontSize: 16 }}>
+                    {t('waiter.prepaid')}
+                  </Text>
+                  <Text style={{ fontSize: 16 }}>−{formatMoney(order?.prepaidTiyns || 0)}</Text>
+                </Flex>
+                <Flex justify="space-between" align="center">
+                  <Text strong style={{ fontSize: 18 }}>
+                    {t('waiter.due')}
+                  </Text>
+                  <Title level={2} style={{ margin: 0, color: '#1f6f5b', fontFamily: 'Fraunces, serif' }}>
+                    {formatMoney(orderDueTiyns(order || {}))}
+                  </Title>
+                </Flex>
+              </>
+            )}
+          </Flex>
+        </div>
 
         <div
           style={{
-            position: 'sticky',
-            bottom: 0,
-            marginTop: 24,
-            paddingTop: 12,
-            paddingBottom: 'max(8px, env(safe-area-inset-bottom, 8px))',
-            background: 'linear-gradient(180deg, transparent, #f7f3ea 24%)',
+            flexShrink: 0,
+            padding: '12px 16px',
+            paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
+            background: '#f7f3ea',
+            borderTop: '1px solid rgba(20,61,52,0.12)',
             display: 'flex',
             gap: 10,
           }}
