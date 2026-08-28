@@ -43,7 +43,9 @@ export function CashierPage() {
   const embedded = isAdminEmbeddedFloor(location.pathname);
   const allowDiscount = canApplyDiscount(user);
   const [params] = useSearchParams();
-  const [listTab, setListTab] = useState<'open' | 'paid'>('open');
+  const [listTab, setListTab] = useState<'open' | 'paid'>(
+    params.get('tab') === 'paid' ? 'paid' : 'open',
+  );
   const [selectedId, setSelectedId] = useState<string | undefined>(params.get('orderId') || undefined);
   const [method, setMethod] = useState<PaymentMethod>('CASH');
   const [receivedTenge, setReceivedTenge] = useState<number>(0);
@@ -55,6 +57,25 @@ export function CashierPage() {
   const [prepaidOpen, setPrepaidOpen] = useState(false);
   const [cashAmount, setCashAmount] = useState(0);
   const [cashComment, setCashComment] = useState('');
+
+  useEffect(() => {
+    const tab = params.get('tab');
+    if (tab === 'paid') setListTab('paid');
+    if (tab === 'open') setListTab('open');
+    const action = params.get('action');
+    if (action === 'close') {
+      setCashAmount(0);
+      setShiftModal('close');
+    } else if (action === 'cash-in') {
+      setCashAmount(0);
+      setCashComment('');
+      setCashModal('in');
+    } else if (action === 'cash-out') {
+      setCashAmount(0);
+      setCashComment('');
+      setCashModal('out');
+    }
+  }, [params]);
 
   const ordersQuery = useQuery({
     queryKey: ['orders', 'open'],

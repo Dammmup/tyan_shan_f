@@ -5,13 +5,17 @@ import { useNavigate } from 'react-router-dom';
 type HubTile = {
   key: string;
   labelKey: string;
-  path: string;
+  /** Nested menu under /admin/hub/:id */
+  menu?: string;
+  path?: string;
 };
 
 type HubGroup = {
   key: string;
   titleKey: string;
   color: string;
+  /** Open category menu first, or go to tile paths */
+  menu?: string;
   tiles: HubTile[];
 };
 
@@ -20,9 +24,10 @@ const GROUPS: HubGroup[] = [
     key: 'order',
     titleKey: 'hub.groupOrder',
     color: '#5f8f4e',
+    menu: 'order',
     tiles: [
       { key: 'create', labelKey: 'hub.createOrder', path: '/admin/floor' },
-      { key: 'edit', labelKey: 'hub.editOrder', path: '/admin/floor' },
+      { key: 'edit', labelKey: 'hub.editOrder', path: '/admin/reports/view/open-orders' },
       { key: 'quick', labelKey: 'hub.quickCheck', path: '/admin/pos' },
       { key: 'reserve', labelKey: 'hub.reservation', path: '/admin/halls' },
       { key: 'tariffs', labelKey: 'hub.tariffs', path: '/admin/discounts' },
@@ -33,19 +38,21 @@ const GROUPS: HubGroup[] = [
     key: 'shift',
     titleKey: 'hub.groupShift',
     color: '#b39a72',
+    menu: 'shift',
     tiles: [
-      { key: 'closeCash', labelKey: 'hub.closeCashShift', path: '/admin/pos' },
-      { key: 'closeCommon', labelKey: 'hub.closeCommonShift', path: '/admin/pos' },
-      { key: 'cashOut', labelKey: 'hub.cashCollection', path: '/admin/pos' },
-      { key: 'cashIn', labelKey: 'hub.cashFloat', path: '/admin/pos' },
-      { key: 'cashReports', labelKey: 'hub.cashReports', path: '/admin/reports' },
-      { key: 'viewReports', labelKey: 'hub.viewReports', path: '/admin/reports' },
+      { key: 'closeCash', labelKey: 'hub.closeCashShift', path: '/admin/pos?action=close' },
+      { key: 'closeCommon', labelKey: 'hub.closeCommonShift', path: '/admin/pos?action=close' },
+      { key: 'cashOut', labelKey: 'hub.cashCollection', path: '/admin/pos?action=cash-out' },
+      { key: 'cashIn', labelKey: 'hub.cashFloat', path: '/admin/pos?action=cash-in' },
+      { key: 'cashReports', labelKey: 'hub.cashReports', menu: 'cash-reports' },
+      { key: 'viewReports', labelKey: 'hub.viewReports', menu: 'view-reports' },
     ],
   },
   {
     key: 'staff',
     titleKey: 'hub.groupStaff',
     color: '#3a6ea5',
+    menu: 'staff',
     tiles: [
       { key: 'bonus', labelKey: 'hub.bonuses', path: '/admin/employees' },
       { key: 'register', labelKey: 'hub.staffRegister', path: '/admin/employees' },
@@ -56,9 +63,10 @@ const GROUPS: HubGroup[] = [
     key: 'ops',
     titleKey: 'hub.groupOps',
     color: '#8b3a4a',
+    menu: 'ops',
     tiles: [
-      { key: 'closedChecks', labelKey: 'hub.closedChecks', path: '/admin/pos' },
-      { key: 'closedOrders', labelKey: 'hub.closedOrders', path: '/admin/reports' },
+      { key: 'closedChecks', labelKey: 'hub.closedChecks', path: '/admin/pos?tab=paid' },
+      { key: 'closedOrders', labelKey: 'hub.closedOrders', path: '/admin/reports/view/paid-orders' },
       { key: 'visits', labelKey: 'hub.visits', path: '/admin/audit' },
     ],
   },
@@ -107,9 +115,23 @@ export function DashboardPage() {
   const left = GROUPS.filter((g) => g.key === 'order' || g.key === 'staff');
   const right = GROUPS.filter((g) => g.key === 'shift' || g.key === 'ops');
 
+  const openTile = (tile: HubTile) => {
+    if (tile.menu) {
+      navigate(`/admin/hub/${tile.menu}`);
+      return;
+    }
+    if (tile.path) navigate(tile.path);
+  };
+
   const renderGroup = (group: HubGroup) => (
     <Stack key={group.key} gap={8} mb="lg">
-      <Text size="sm" c="#4a453f" fw={600}>
+      <Text
+        size="sm"
+        c="#4a453f"
+        fw={600}
+        style={{ cursor: group.menu ? 'pointer' : undefined }}
+        onClick={() => group.menu && navigate(`/admin/hub/${group.menu}`)}
+      >
         {t(group.titleKey)}
       </Text>
       <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={10}>
@@ -118,7 +140,7 @@ export function DashboardPage() {
             key={tile.key}
             label={t(tile.labelKey)}
             color={group.color}
-            onClick={() => navigate(tile.path)}
+            onClick={() => openTile(tile)}
           />
         ))}
       </SimpleGrid>

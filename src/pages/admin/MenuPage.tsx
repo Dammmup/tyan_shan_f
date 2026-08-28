@@ -24,6 +24,7 @@ import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { menuApi } from '../../api/endpoints';
 import { formatMoney, tengeToTiyns, tiynsToTenge } from '../../utils/money';
 import { centerLabel } from '../../utils/centers';
@@ -33,6 +34,8 @@ const CENTERS: ProductionCenter[] = ['COLD', 'KITCHEN', 'BAR', 'GRILL', 'DESSERT
 
 export function MenuPage() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const availabilityFilter = searchParams.get('filter'); // STOPPED | HIDDEN
   const qc = useQueryClient();
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [catModal, setCatModal] = useState(false);
@@ -49,10 +52,17 @@ export function MenuPage() {
   const groupsQuery = useQuery({ queryKey: ['modifier-groups'], queryFn: menuApi.modifierGroups });
   const activeCategory = categoryId || categoriesQuery.data?.[0]?._id;
   const productsQuery = useQuery({
-    queryKey: ['products', activeCategory],
-    queryFn: () => menuApi.products(activeCategory),
-    enabled: Boolean(activeCategory),
+    queryKey: ['products', availabilityFilter ? 'all' : activeCategory],
+    queryFn: () => menuApi.products(availabilityFilter ? undefined : activeCategory),
+    enabled: Boolean(availabilityFilter) || Boolean(activeCategory),
   });
+  const visibleProducts = useMemo(() => {
+    const rows = productsQuery.data || [];
+    if (availabilityFilter === 'STOPPED' || availabilityFilter === 'HIDDEN') {
+      return rows.filter((p) => p.availability === availabilityFilter);
+    }
+    return rows;
+  }, [productsQuery.data, availabilityFilter]);
   const selectedGroupId = activeGroupId || groupsQuery.data?.[0]?._id;
   const modifiersQuery = useQuery({
     queryKey: ['modifiers', selectedGroupId],
@@ -385,7 +395,7 @@ export function MenuPage() {
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {(productsQuery.data || []).map((p) => (
+                    {visibleProducts.map((p) => (
                       <Table.Tr key={p._id}>
                         <Table.Td>
                           <Text fw={600}>{p.name}</Text>

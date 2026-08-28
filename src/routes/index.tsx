@@ -7,6 +7,8 @@ import { WaiterOrderPage } from '../pages/waiter/WaiterOrderPage';
 import { KitchenPage } from '../pages/kitchen/KitchenPage';
 import { CashierPage } from '../pages/cashier/CashierPage';
 import { DashboardPage } from '../pages/admin/DashboardPage';
+import { HubMenuPage } from '../pages/admin/HubMenuPage';
+import { ReportViewPage } from '../pages/admin/ReportViewPage';
 import { MenuPage } from '../pages/admin/MenuPage';
 import { HallsPage } from '../pages/admin/HallsPage';
 import { EmployeesPage } from '../pages/admin/EmployeesPage';
@@ -83,6 +85,8 @@ export function AppRouter() {
           }
         >
           <Route index element={<DashboardPage />} />
+          <Route path="hub/:menuId" element={<HubMenuPage />} />
+          <Route path="reports/view/:reportId" element={<ReportViewPage />} />
           <Route path="floor" element={<WaiterHallPage />} />
           <Route path="floor/orders/:orderId" element={<WaiterOrderPage />} />
           <Route path="pos" element={<CashierPage />} />
