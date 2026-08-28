@@ -1,7 +1,6 @@
 import { SimpleGrid, Stack, Text } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { HubChromeFooter } from '../../layouts/AdminLayout';
 
 type HubTile = {
   key: string;
@@ -147,14 +146,11 @@ export function DashboardPage() {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100dvh - 48px)' }}>
-      <div style={{ flex: 1, padding: 16, maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-        <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: 8, md: 28 }}>
-          <div>{left.map(renderGroup)}</div>
-          <div>{right.map(renderGroup)}</div>
-        </SimpleGrid>
-      </div>
-      <HubChromeFooter />
+    <div style={{ padding: 16, maxWidth: 1100, margin: '0 auto', width: '100%' }}>
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: 8, md: 28 }}>
+        <div>{left.map(renderGroup)}</div>
+        <div>{right.map(renderGroup)}</div>
+      </SimpleGrid>
     </div>
   );
 }

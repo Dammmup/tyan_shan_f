@@ -1,19 +1,9 @@
 import { useMemo, type CSSProperties } from 'react';
 import { ActionIcon, AppShell, Group, Text, Tooltip } from '@mantine/core';
-import {
-  IconArrowLeft,
-  IconLock,
-  IconLogout,
-  IconRefresh,
-  IconSettings,
-  IconX,
-} from '@tabler/icons-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { IconArrowLeft, IconLogout, IconSettings } from '@tabler/icons-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { shiftsApi } from '../api/endpoints';
 import { useAuthStore } from '../stores/authStore';
-import { formatDateTime } from '../utils/time';
 import { disconnectSocket } from '../websocket/socket';
 
 function formatNowRu(d: Date) {
@@ -27,120 +17,12 @@ function formatNowRu(d: Date) {
   }).format(d);
 }
 
-/** Hub-only footer — never mount inside AppShell so it cannot cover staff action bars. */
-export function HubChromeFooter() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const logout = useAuthStore((s) => s.logout);
-
-  const shiftQuery = useQuery({
-    queryKey: ['shift', 'current'],
-    queryFn: shiftsApi.current,
-    refetchInterval: 30000,
-  });
-
-  const onLogout = async () => {
-    disconnectSocket();
-    await logout();
-    navigate('/login', { replace: true });
-  };
-
-  const shift = shiftQuery.data;
-  const shiftOpen = Boolean(shift && shift.status === 'OPEN');
-
-  return (
-    <div
-      className="hub-chrome-footer"
-      style={{
-        position: 'sticky',
-        bottom: 0,
-        zIndex: 20,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
-        flexWrap: 'wrap',
-        minHeight: 56,
-        padding: '8px 16px',
-        paddingBottom: 'max(8px, env(safe-area-inset-bottom, 8px))',
-        background: '#cfc9be',
-        borderTop: '1px solid #b8b2a6',
-      }}
-    >
-      <Text size="sm" c="#3a3530">
-        {shiftOpen && shift?.openedAt
-          ? `${t('hub.shiftOpen')} ${formatDateTime(shift.openedAt)}`
-          : t('cashier.noShift')}
-      </Text>
-      <Group gap={8}>
-        <Tooltip label={t('hub.refresh')}>
-          <ActionIcon
-            size={40}
-            radius="sm"
-            style={{ background: '#3d6ea5' }}
-            c="#fff"
-            onClick={() => {
-              void queryClient.invalidateQueries();
-            }}
-          >
-            <IconRefresh size={20} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label={t('admin.settings')}>
-          <ActionIcon
-            size={40}
-            radius="sm"
-            style={{ background: '#3d6ea5' }}
-            c="#fff"
-            onClick={() => navigate('/admin/settings')}
-          >
-            <IconSettings size={20} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label={t('app.logout')}>
-          <ActionIcon
-            size={40}
-            radius="sm"
-            style={{ background: '#b33a3a' }}
-            c="#fff"
-            onClick={() => void onLogout()}
-          >
-            <IconLogout size={20} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label={t('hub.toHome')}>
-          <ActionIcon
-            size={40}
-            radius="sm"
-            style={{ background: '#b33a3a' }}
-            c="#fff"
-            onClick={() => navigate('/admin')}
-          >
-            <IconX size={20} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label={t('hub.lock')}>
-          <ActionIcon
-            size={40}
-            radius="sm"
-            style={{ background: '#b33a3a' }}
-            c="#fff"
-            onClick={() => void onLogout()}
-          >
-            <IconLock size={20} />
-          </ActionIcon>
-        </Tooltip>
-      </Group>
-    </div>
-  );
-}
-
 export function AdminLayout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
 
   const isHub = location.pathname === '/admin' || location.pathname === '/admin/';
   const onStaffWorkspace =
@@ -149,6 +31,12 @@ export function AdminLayout() {
     location.pathname.startsWith('/admin/kitchen-view');
 
   const nowLabel = useMemo(() => formatNowRu(new Date()), [location.pathname]);
+
+  const onLogout = async () => {
+    disconnectSocket();
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <AppShell
@@ -162,7 +50,6 @@ export function AdminLayout() {
         main: {
           background: '#d8d4cc',
           minHeight: 'calc(100dvh - 48px)',
-          // Leave room for fixed order/cashier action bar only on staff screens
           paddingBottom: onStaffWorkspace
             ? 'calc(110px + env(safe-area-inset-bottom, 0px))'
             : 0,
@@ -197,9 +84,35 @@ export function AdminLayout() {
           <Text c="rgba(244,239,230,0.85)" size="sm" visibleFrom="sm">
             {nowLabel}
           </Text>
-          <Text c="rgba(244,239,230,0.9)" size="sm" lineClamp={1}>
-            {user?.name} · {t(`roles.${user?.role}`, { defaultValue: user?.role })}
-          </Text>
+          <Group gap="xs" wrap="nowrap">
+            <Text c="rgba(244,239,230,0.9)" size="sm" lineClamp={1}>
+              {user?.name} · {t(`roles.${user?.role}`, { defaultValue: user?.role })}
+            </Text>
+            <Tooltip label={t('admin.settings')}>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                c="#f4efe6"
+                size="lg"
+                aria-label={t('admin.settings')}
+                onClick={() => navigate('/admin/settings')}
+              >
+                <IconSettings size={18} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('app.logout')}>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                c="#f4efe6"
+                size="lg"
+                aria-label={t('app.logout')}
+                onClick={() => void onLogout()}
+              >
+                <IconLogout size={18} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
         </Group>
       </AppShell.Header>
 
