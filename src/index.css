@@ -78,13 +78,16 @@ canvas {
 
 /* Staff bottom bars: respect iPhone home indicator */
 .staff-bottom-bar {
-  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 400 !important;
 }
 
 /* Inside admin shell: full width (no sidebar) */
 .staff-bottom-bar--admin {
-  left: var(--admin-aside-offset, 0px);
-  width: auto;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
 }
 
 /* Precheck: one scroll area, actions stay visible (no nested page scroll) */

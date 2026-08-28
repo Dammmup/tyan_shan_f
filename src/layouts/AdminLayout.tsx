@@ -1,11 +1,5 @@
 import { useMemo, type CSSProperties } from 'react';
-import {
-  ActionIcon,
-  AppShell,
-  Group,
-  Text,
-  Tooltip,
-} from '@mantine/core';
+import { ActionIcon, AppShell, Group, Text, Tooltip } from '@mantine/core';
 import {
   IconArrowLeft,
   IconLock,
@@ -33,28 +27,18 @@ function formatNowRu(d: Date) {
   }).format(d);
 }
 
-export function AdminLayout() {
+/** Hub-only footer — never mount inside AppShell so it cannot cover staff action bars. */
+export function HubChromeFooter() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-
-  const isHub = location.pathname === '/admin' || location.pathname === '/admin/';
-  /** Floor / POS / kitchen need their own action bars — hide hub footer so it does not cover them. */
-  const onStaffWorkspace =
-    location.pathname.startsWith('/admin/floor') ||
-    location.pathname.startsWith('/admin/pos') ||
-    location.pathname.startsWith('/admin/kitchen-view');
 
   const shiftQuery = useQuery({
     queryKey: ['shift', 'current'],
     queryFn: shiftsApi.current,
     refetchInterval: 30000,
   });
-
-  const nowLabel = useMemo(() => formatNowRu(new Date()), [location.pathname]);
 
   const onLogout = async () => {
     disconnectSocket();
@@ -66,32 +50,128 @@ export function AdminLayout() {
   const shiftOpen = Boolean(shift && shift.status === 'OPEN');
 
   return (
+    <div
+      className="hub-chrome-footer"
+      style={{
+        position: 'sticky',
+        bottom: 0,
+        zIndex: 20,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        flexWrap: 'wrap',
+        minHeight: 56,
+        padding: '8px 16px',
+        paddingBottom: 'max(8px, env(safe-area-inset-bottom, 8px))',
+        background: '#cfc9be',
+        borderTop: '1px solid #b8b2a6',
+      }}
+    >
+      <Text size="sm" c="#3a3530">
+        {shiftOpen && shift?.openedAt
+          ? `${t('hub.shiftOpen')} ${formatDateTime(shift.openedAt)}`
+          : t('cashier.noShift')}
+      </Text>
+      <Group gap={8}>
+        <Tooltip label={t('hub.refresh')}>
+          <ActionIcon
+            size={40}
+            radius="sm"
+            style={{ background: '#3d6ea5' }}
+            c="#fff"
+            onClick={() => {
+              void queryClient.invalidateQueries();
+            }}
+          >
+            <IconRefresh size={20} />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label={t('admin.settings')}>
+          <ActionIcon
+            size={40}
+            radius="sm"
+            style={{ background: '#3d6ea5' }}
+            c="#fff"
+            onClick={() => navigate('/admin/settings')}
+          >
+            <IconSettings size={20} />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label={t('app.logout')}>
+          <ActionIcon
+            size={40}
+            radius="sm"
+            style={{ background: '#b33a3a' }}
+            c="#fff"
+            onClick={() => void onLogout()}
+          >
+            <IconLogout size={20} />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label={t('hub.toHome')}>
+          <ActionIcon
+            size={40}
+            radius="sm"
+            style={{ background: '#b33a3a' }}
+            c="#fff"
+            onClick={() => navigate('/admin')}
+          >
+            <IconX size={20} />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label={t('hub.lock')}>
+          <ActionIcon
+            size={40}
+            radius="sm"
+            style={{ background: '#b33a3a' }}
+            c="#fff"
+            onClick={() => void onLogout()}
+          >
+            <IconLock size={20} />
+          </ActionIcon>
+        </Tooltip>
+      </Group>
+    </div>
+  );
+}
+
+export function AdminLayout() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const user = useAuthStore((s) => s.user);
+
+  const isHub = location.pathname === '/admin' || location.pathname === '/admin/';
+  const onStaffWorkspace =
+    location.pathname.startsWith('/admin/floor') ||
+    location.pathname.startsWith('/admin/pos') ||
+    location.pathname.startsWith('/admin/kitchen-view');
+
+  const nowLabel = useMemo(() => formatNowRu(new Date()), [location.pathname]);
+
+  return (
     <AppShell
       header={{ height: 48 }}
-      footer={onStaffWorkspace ? undefined : { height: 56 }}
       padding={0}
-      style={
-        {
-          ['--admin-aside-offset']: '0px',
-          ['--admin-footer-height']: onStaffWorkspace ? '0px' : '56px',
-        } as CSSProperties
-      }
+      style={{ ['--admin-aside-offset']: '0px' } as CSSProperties}
       styles={{
+        root: {
+          minHeight: '100dvh',
+        },
         main: {
           background: '#d8d4cc',
-          minHeight: '100%',
-          // Space for fixed staff action bar (order / hall), not hub footer
+          minHeight: 'calc(100dvh - 48px)',
+          // Leave room for fixed order/cashier action bar only on staff screens
           paddingBottom: onStaffWorkspace
-            ? 'calc(96px + env(safe-area-inset-bottom, 0px))'
-            : undefined,
+            ? 'calc(110px + env(safe-area-inset-bottom, 0px))'
+            : 0,
+          overflow: 'auto',
         },
         header: {
           background: '#2a2a2a',
           borderBottom: 'none',
-        },
-        footer: {
-          background: '#cfc9be',
-          borderTop: '1px solid #b8b2a6',
+          zIndex: 200,
         },
       }}
     >
@@ -126,77 +206,6 @@ export function AdminLayout() {
       <AppShell.Main>
         <Outlet />
       </AppShell.Main>
-
-      {!onStaffWorkspace && (
-        <AppShell.Footer>
-          <Group h="100%" px="md" justify="space-between" wrap="nowrap">
-            <Text size="sm" c="#3a3530">
-              {shiftOpen && shift?.openedAt
-                ? `${t('hub.shiftOpen')} ${formatDateTime(shift.openedAt)}`
-                : t('cashier.noShift')}
-            </Text>
-            <Group gap={8}>
-              <Tooltip label={t('hub.refresh')}>
-                <ActionIcon
-                  size={40}
-                  radius="sm"
-                  style={{ background: '#3d6ea5' }}
-                  c="#fff"
-                  onClick={() => {
-                    void queryClient.invalidateQueries();
-                  }}
-                >
-                  <IconRefresh size={20} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label={t('admin.settings')}>
-                <ActionIcon
-                  size={40}
-                  radius="sm"
-                  style={{ background: '#3d6ea5' }}
-                  c="#fff"
-                  onClick={() => navigate('/admin/settings')}
-                >
-                  <IconSettings size={20} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label={t('app.logout')}>
-                <ActionIcon
-                  size={40}
-                  radius="sm"
-                  style={{ background: '#b33a3a' }}
-                  c="#fff"
-                  onClick={() => void onLogout()}
-                >
-                  <IconLogout size={20} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label={t('hub.toHome')}>
-                <ActionIcon
-                  size={40}
-                  radius="sm"
-                  style={{ background: '#b33a3a' }}
-                  c="#fff"
-                  onClick={() => navigate('/admin')}
-                >
-                  <IconX size={20} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label={t('hub.lock')}>
-                <ActionIcon
-                  size={40}
-                  radius="sm"
-                  style={{ background: '#b33a3a' }}
-                  c="#fff"
-                  onClick={() => void onLogout()}
-                >
-                  <IconLock size={20} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-          </Group>
-        </AppShell.Footer>
-      )}
     </AppShell>
   );
 }

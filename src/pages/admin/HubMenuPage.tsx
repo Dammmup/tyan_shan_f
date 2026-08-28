@@ -2,6 +2,7 @@ import { useMemo, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { HUB_MENUS, resolveHubAction } from '../../hub/hubConfig';
+import { HubChromeFooter } from '../../layouts/AdminLayout';
 
 const TILE_BLUE = '#2f6db5';
 
@@ -31,49 +32,52 @@ export function HubMenuPage() {
   };
 
   return (
-    <div style={{ minHeight: '100%', background: '#cfd6e4' }}>
-      <div
-        style={{
-          background: '#1e1e1e',
-          color: '#fff',
-          textAlign: 'center',
-          padding: '10px 16px',
-          fontWeight: 600,
-          fontSize: 18,
-        }}
-      >
-        {title}
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100dvh - 48px)' }}>
+      <div style={{ flex: 1, background: '#cfd6e4' }}>
+        <div
+          style={{
+            background: '#1e1e1e',
+            color: '#fff',
+            textAlign: 'center',
+            padding: '10px 16px',
+            fontWeight: 600,
+            fontSize: 18,
+          }}
+        >
+          {title}
+        </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 2,
-          padding: 8,
-          alignItems: 'stretch',
-        }}
-      >
-        <button type="button" onClick={goBack} aria-label={t('app.back')} style={tileStyle(72)}>
-          ←
-        </button>
-        {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            style={tileStyle(item.id === 'close' ? 160 : 140)}
-            onClick={() => {
-              if (item.menu) {
-                navigate(`/admin/hub/${item.menu}`);
-                return;
-              }
-              if (item.action) navigate(resolveHubAction(item.action));
-            }}
-          >
-            {t(item.labelKey)}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+            padding: 8,
+            alignItems: 'stretch',
+          }}
+        >
+          <button type="button" onClick={goBack} aria-label={t('app.back')} style={tileStyle(72)}>
+            ←
           </button>
-        ))}
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              style={tileStyle(item.id === 'close' ? 160 : 140)}
+              onClick={() => {
+                if (item.menu) {
+                  navigate(`/admin/hub/${item.menu}`);
+                  return;
+                }
+                if (item.action) navigate(resolveHubAction(item.action));
+              }}
+            >
+              {t(item.labelKey)}
+            </button>
+          ))}
+        </div>
       </div>
+      <HubChromeFooter />
     </div>
   );
 }
