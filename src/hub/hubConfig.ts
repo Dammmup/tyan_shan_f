@@ -269,47 +269,12 @@ export const HUB_MENUS: Record<string, HubMenu> = {
         labelKey: 'hub.quickCheck',
         action: { type: 'path', to: '/admin/pos' },
       },
-      {
-        id: 'reserve',
-        labelKey: 'hub.reservation',
-        action: { type: 'path', to: '/admin/halls' },
-      },
-      {
-        id: 'tariffs',
-        labelKey: 'hub.tariffs',
-        action: { type: 'path', to: '/admin/discounts' },
-      },
-      {
-        id: 'control',
-        labelKey: 'hub.orderControl',
-        action: { type: 'path', to: '/admin/kitchen-view' },
-      },
     ],
   },
   shift: {
     id: 'shift',
     titleKey: 'hub.groupShift',
     items: [
-      {
-        id: 'close-cash',
-        labelKey: 'hub.closeCashShift',
-        action: { type: 'path', to: '/admin/pos?action=close' },
-      },
-      {
-        id: 'close-common',
-        labelKey: 'hub.closeCommonShift',
-        action: { type: 'path', to: '/admin/pos?action=close' },
-      },
-      {
-        id: 'cash-out',
-        labelKey: 'hub.cashCollection',
-        action: { type: 'path', to: '/admin/pos?action=cash-out' },
-      },
-      {
-        id: 'cash-in',
-        labelKey: 'hub.cashFloat',
-        action: { type: 'path', to: '/admin/pos?action=cash-in' },
-      },
       { id: 'cash-reports', labelKey: 'hub.cashReports', menu: 'cash-reports' },
       { id: 'view-reports', labelKey: 'hub.viewReports', menu: 'view-reports' },
     ],
@@ -318,11 +283,6 @@ export const HUB_MENUS: Record<string, HubMenu> = {
     id: 'staff',
     titleKey: 'hub.groupStaff',
     items: [
-      {
-        id: 'bonus',
-        labelKey: 'hub.bonuses',
-        action: { type: 'path', to: '/admin/employees' },
-      },
       {
         id: 'register',
         labelKey: 'hub.staffRegister',
@@ -348,11 +308,6 @@ export const HUB_MENUS: Record<string, HubMenu> = {
         id: 'closed-orders',
         labelKey: 'hub.closedOrders',
         action: { type: 'report', report: 'paid-orders' },
-      },
-      {
-        id: 'visits',
-        labelKey: 'hub.visits',
-        action: { type: 'path', to: '/admin/audit' },
       },
     ],
   },

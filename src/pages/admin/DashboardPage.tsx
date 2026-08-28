@@ -27,9 +27,6 @@ const GROUPS: HubGroup[] = [
       { key: 'create', labelKey: 'hub.createOrder', path: '/admin/floor' },
       { key: 'edit', labelKey: 'hub.editOrder', path: '/admin/reports/view/open-orders' },
       { key: 'quick', labelKey: 'hub.quickCheck', path: '/admin/pos' },
-      { key: 'reserve', labelKey: 'hub.reservation', path: '/admin/halls' },
-      { key: 'tariffs', labelKey: 'hub.tariffs', path: '/admin/discounts' },
-      { key: 'control', labelKey: 'hub.orderControl', path: '/admin/kitchen-view' },
     ],
   },
   {
@@ -38,10 +35,6 @@ const GROUPS: HubGroup[] = [
     color: '#b39a72',
     menu: 'shift',
     tiles: [
-      { key: 'closeCash', labelKey: 'hub.closeCashShift', path: '/admin/pos?action=close' },
-      { key: 'closeCommon', labelKey: 'hub.closeCommonShift', path: '/admin/pos?action=close' },
-      { key: 'cashOut', labelKey: 'hub.cashCollection', path: '/admin/pos?action=cash-out' },
-      { key: 'cashIn', labelKey: 'hub.cashFloat', path: '/admin/pos?action=cash-in' },
       { key: 'cashReports', labelKey: 'hub.cashReports', menu: 'cash-reports' },
       { key: 'viewReports', labelKey: 'hub.viewReports', menu: 'view-reports' },
     ],
@@ -52,7 +45,6 @@ const GROUPS: HubGroup[] = [
     color: '#3a6ea5',
     menu: 'staff',
     tiles: [
-      { key: 'bonus', labelKey: 'hub.bonuses', path: '/admin/employees' },
       { key: 'register', labelKey: 'hub.staffRegister', path: '/admin/employees' },
       { key: 'time', labelKey: 'hub.timeTracking', path: '/admin/audit' },
     ],
@@ -65,7 +57,6 @@ const GROUPS: HubGroup[] = [
     tiles: [
       { key: 'closedChecks', labelKey: 'hub.closedChecks', path: '/admin/pos?tab=paid' },
       { key: 'closedOrders', labelKey: 'hub.closedOrders', path: '/admin/reports/view/paid-orders' },
-      { key: 'visits', labelKey: 'hub.visits', path: '/admin/audit' },
     ],
   },
 ];

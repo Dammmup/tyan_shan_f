@@ -725,7 +725,7 @@ export function WaiterOrderPage() {
         width="100%"
         style={{ top: 0, maxWidth: '100vw', paddingBottom: 0, margin: 0 }}
         styles={{
-          content: {
+          container: {
             height: '100dvh',
             maxHeight: '100dvh',
             display: 'flex',

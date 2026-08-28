@@ -102,7 +102,13 @@ canvas {
   overflow: hidden;
 }
 
-.precheck-preview-modal .ant-modal-content {
+.precheck-preview-modal .ant-modal-content,
+.precheck-preview-modal .ant-modal-container {
   height: 100dvh;
   max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  padding: 0;
+  overflow: hidden;
 }
