@@ -25,6 +25,7 @@ import { notifications } from '@mantine/notifications';
 import { IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 import { menuApi } from '../../api/endpoints';
 import { formatMoney, tengeToTiyns, tiynsToTenge } from '../../utils/money';
 import { centerLabel } from '../../utils/centers';
@@ -288,9 +289,7 @@ export function MenuPage() {
   };
 
   return (
-    <Stack gap="md">
-      <Title order={2}>{t('admin.menu')}</Title>
-
+    <AdminPageFrame title={t('admin.menu')}>
       <Tabs defaultValue="products">
         <Tabs.List>
           <Tabs.Tab value="products">{t('admin.products')}</Tabs.Tab>
@@ -683,6 +682,6 @@ export function MenuPage() {
           </Stack>
         </form>
       </Modal>
-    </Stack>
+    </AdminPageFrame>
   );
 }

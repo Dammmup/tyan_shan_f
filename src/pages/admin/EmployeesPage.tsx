@@ -21,6 +21,7 @@ import { notifications } from '@mantine/notifications';
 import { IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { rolesApi, usersApi } from '../../api/endpoints';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 import type { Employee } from '../../types';
 
 type EmpForm = {
@@ -172,16 +173,16 @@ export function EmployeesPage() {
   };
 
   return (
-    <Stack gap="md">
-      <Group justify="space-between">
-        <Title order={2}>{t('admin.employees')}</Title>
+    <AdminPageFrame
+      title={t('admin.employees')}
+      actions={
         <Button leftSection={<IconPlus size={16} />} onClick={openCreate}>
           {t('app.create')}
         </Button>
-      </Group>
-
-      <Paper p="md" withBorder shadow="xs" bg="rgba(250,247,241,0.9)">
-        <Table.ScrollContainer minWidth={720}>
+      }
+    >
+      <Paper p="md" withBorder radius="md" bg="#faf7f1">
+        <Table.ScrollContainer minWidth={320}>
           <Table highlightOnHover verticalSpacing="sm">
             <Table.Thead>
               <Table.Tr>
@@ -289,6 +290,6 @@ export function EmployeesPage() {
           </Stack>
         </form>
       </Modal>
-    </Stack>
+    </AdminPageFrame>
   );
 }

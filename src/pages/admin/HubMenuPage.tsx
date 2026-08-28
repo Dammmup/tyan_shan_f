@@ -1,6 +1,7 @@
 import { useMemo, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 import { HUB_MENUS, resolveHubAction } from '../../hub/hubConfig';
 
 const TILE_BLUE = '#2f6db5';
@@ -16,12 +17,11 @@ export function HubMenuPage() {
 
   if (!menu) {
     return (
-      <div style={{ padding: 24 }}>
-        <p>{t('app.empty')}</p>
+      <AdminPageFrame title={t('app.empty')}>
         <button type="button" onClick={() => navigate('/admin')}>
           {t('hub.toHome')}
         </button>
-      </div>
+      </AdminPageFrame>
     );
   }
 
@@ -31,37 +31,22 @@ export function HubMenuPage() {
   };
 
   return (
-    <div style={{ minHeight: 'calc(100dvh - 48px)', background: '#cfd6e4' }}>
+    <AdminPageFrame title={title}>
       <div
         style={{
-          background: '#1e1e1e',
-          color: '#fff',
-          textAlign: 'center',
-          padding: '10px 16px',
-          fontWeight: 600,
-          fontSize: 18,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+          gap: 10,
         }}
       >
-        {title}
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 2,
-          padding: 8,
-          alignItems: 'stretch',
-        }}
-      >
-        <button type="button" onClick={goBack} aria-label={t('app.back')} style={tileStyle(72)}>
-          ←
+        <button type="button" onClick={goBack} aria-label={t('app.back')} style={tileStyle()}>
+          ← {t('app.back')}
         </button>
         {items.map((item) => (
           <button
             key={item.id}
             type="button"
-            style={tileStyle(item.id === 'close' ? 160 : 140)}
+            style={tileStyle()}
             onClick={() => {
               if (item.menu) {
                 navigate(`/admin/hub/${item.menu}`);
@@ -74,18 +59,16 @@ export function HubMenuPage() {
           </button>
         ))}
       </div>
-    </div>
+    </AdminPageFrame>
   );
 }
 
-function tileStyle(minWidth: number): CSSProperties {
+function tileStyle(): CSSProperties {
   return {
-    minWidth,
-    flex: '1 1 120px',
-    maxWidth: 220,
-    minHeight: 88,
-    padding: '12px 10px',
-    border: '1px solid rgba(0,0,0,0.15)',
+    minHeight: 72,
+    padding: '14px 12px',
+    border: '1px solid rgba(0,0,0,0.12)',
+    borderRadius: 8,
     background: TILE_BLUE,
     color: '#fff',
     fontWeight: 600,
@@ -93,5 +76,6 @@ function tileStyle(minWidth: number): CSSProperties {
     lineHeight: 1.25,
     textAlign: 'center',
     cursor: 'pointer',
+    touchAction: 'manipulation',
   };
 }

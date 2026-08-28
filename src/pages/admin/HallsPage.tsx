@@ -22,6 +22,7 @@ import { notifications } from '@mantine/notifications';
 import { IconEdit, IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 import { hallsApi, ordersApi, tablesApi } from '../../api/endpoints';
 import type { Hall, Table as HallTable } from '../../types';
 import { TABLE_STATUS_COLORS } from '../../utils/roles';
@@ -151,9 +152,9 @@ export function HallsPage() {
   };
 
   return (
-    <Stack gap="md">
-      <Group justify="space-between">
-        <Title order={2}>{t('admin.halls')}</Title>
+    <AdminPageFrame
+      title={t('admin.halls')}
+      actions={
         <Group>
           <Button variant="light" leftSection={<IconPlus size={16} />} onClick={openCreateHall}>
             {t('admin.addHall')}
@@ -166,7 +167,8 @@ export function HallsPage() {
             {t('admin.addTable')}
           </Button>
         </Group>
-      </Group>
+      }
+    >
 
       <Group>
         <Select
@@ -332,6 +334,6 @@ export function HallsPage() {
           </Stack>
         </form>
       </Modal>
-    </Stack>
+    </AdminPageFrame>
   );
 }

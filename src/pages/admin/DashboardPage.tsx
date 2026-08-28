@@ -1,6 +1,7 @@
 import { SimpleGrid, Stack, Text } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 
 type HubTile = {
   key: string;
@@ -78,10 +79,11 @@ function TileButton({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 72,
-        padding: '12px 10px',
+        minHeight: 64,
+        width: '100%',
+        padding: '14px 12px',
         border: 'none',
-        borderRadius: 4,
+        borderRadius: 8,
         background: color,
         color: '#fff',
         fontWeight: 600,
@@ -89,6 +91,7 @@ function TileButton({
         lineHeight: 1.25,
         textAlign: 'center',
         cursor: 'pointer',
+        touchAction: 'manipulation',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
       }}
     >
@@ -101,9 +104,6 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const left = GROUPS.filter((g) => g.key === 'order' || g.key === 'staff');
-  const right = GROUPS.filter((g) => g.key === 'shift' || g.key === 'ops');
-
   const openTile = (tile: HubTile) => {
     if (tile.menu) {
       navigate(`/admin/hub/${tile.menu}`);
@@ -112,36 +112,33 @@ export function DashboardPage() {
     if (tile.path) navigate(tile.path);
   };
 
-  const renderGroup = (group: HubGroup) => (
-    <Stack key={group.key} gap={8} mb="lg">
-      <Text
-        size="sm"
-        c="#4a453f"
-        fw={600}
-        style={{ cursor: group.menu ? 'pointer' : undefined }}
-        onClick={() => group.menu && navigate(`/admin/hub/${group.menu}`)}
-      >
-        {t(group.titleKey)}
-      </Text>
-      <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={10}>
-        {group.tiles.map((tile) => (
-          <TileButton
-            key={tile.key}
-            label={t(tile.labelKey)}
-            color={group.color}
-            onClick={() => openTile(tile)}
-          />
+  return (
+    <AdminPageFrame title={t('admin.dashboard')}>
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
+        {GROUPS.map((group) => (
+          <Stack key={group.key} gap={8}>
+            <Text
+              size="sm"
+              c="#4a453f"
+              fw={700}
+              style={{ cursor: group.menu ? 'pointer' : undefined }}
+              onClick={() => group.menu && navigate(`/admin/hub/${group.menu}`)}
+            >
+              {t(group.titleKey)}
+            </Text>
+            <SimpleGrid cols={{ base: 1, xs: 2 }} spacing={10}>
+              {group.tiles.map((tile) => (
+                <TileButton
+                  key={tile.key}
+                  label={t(tile.labelKey)}
+                  color={group.color}
+                  onClick={() => openTile(tile)}
+                />
+              ))}
+            </SimpleGrid>
+          </Stack>
         ))}
       </SimpleGrid>
-    </Stack>
-  );
-
-  return (
-    <div style={{ padding: 16, maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: 8, md: 28 }}>
-        <div>{left.map(renderGroup)}</div>
-        <div>{right.map(renderGroup)}</div>
-      </SimpleGrid>
-    </div>
+    </AdminPageFrame>
   );
 }

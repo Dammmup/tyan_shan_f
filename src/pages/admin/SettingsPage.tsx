@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { restaurantsApi } from '../../api/endpoints';
 import { setAppLanguage } from '../../i18n';
 import { useAuthStore } from '../../stores/authStore';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 
 type FormValues = {
   name: string;
@@ -81,64 +82,61 @@ export function SettingsPage() {
   });
 
   return (
-    <Stack gap="lg" maw={640}>
-      <Title order={2}>{t('admin.settings')}</Title>
-
-      <Stack gap="xs">
-        <Text fw={600}>{t('hub.configSection')}</Text>
-        <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-          {[
-            { path: '/admin/menu', label: t('admin.menu') },
-            { path: '/admin/halls', label: t('admin.halls') },
-            { path: '/admin/printers', label: t('admin.printers') },
-            { path: '/admin/roles', label: t('admin.roles') },
-            { path: '/admin/discounts', label: t('admin.discounts') },
-            { path: '/admin/audit', label: t('admin.audit') },
-          ].map((item) => (
-            <Button
-              key={item.path}
-              variant="light"
-              color="teal"
-              onClick={() => navigate(item.path)}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </SimpleGrid>
-      </Stack>
-
-      <Stack gap="xs">
-        <Text fw={600}>{t('admin.languageHint')}</Text>
-        <Radio.Group
-          value={i18n.language}
-          onChange={(v) => setAppLanguage(v)}
-        >
-          <Stack gap="xs">
-            <Radio value="ru" label="Русский" />
-            <Radio value="kk" label="Қазақша" />
-            <Radio value="en" label="English" />
-          </Stack>
-        </Radio.Group>
-      </Stack>
-
-      <form onSubmit={form.onSubmit((v) => saveMutation.mutate(v))}>
-        <Stack gap="sm">
-          <Text fw={600}>{t('admin.restaurantSettings')}</Text>
-          <TextInput label={t('admin.cafeName')} {...form.getInputProps('name')} />
-          <TextInput label={t('admin.address')} {...form.getInputProps('address')} />
-          <TextInput label={t('admin.timezone')} {...form.getInputProps('timezone')} />
-          <NumberInput
-            label={t('admin.servicePercent')}
-            min={0}
-            max={100}
-            suffix=" %"
-            {...form.getInputProps('serviceChargePercent')}
-          />
-          <Button type="submit" loading={saveMutation.isPending} disabled={!restaurant}>
-            {t('app.save')}
-          </Button>
+    <AdminPageFrame title={t('admin.settings')}>
+      <Stack gap="lg" maw={640}>
+        <Stack gap="xs">
+          <Text fw={600}>{t('hub.configSection')}</Text>
+          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
+            {[
+              { path: '/admin/menu', label: t('admin.menu') },
+              { path: '/admin/halls', label: t('admin.halls') },
+              { path: '/admin/printers', label: t('admin.printers') },
+              { path: '/admin/roles', label: t('admin.roles') },
+              { path: '/admin/discounts', label: t('admin.discounts') },
+              { path: '/admin/audit', label: t('admin.audit') },
+            ].map((item) => (
+              <Button
+                key={item.path}
+                variant="light"
+                color="teal"
+                onClick={() => navigate(item.path)}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </SimpleGrid>
         </Stack>
-      </form>
-    </Stack>
+
+        <Stack gap="xs">
+          <Text fw={600}>{t('admin.languageHint')}</Text>
+          <Radio.Group value={i18n.language} onChange={(v) => setAppLanguage(v)}>
+            <Stack gap="xs">
+              <Radio value="ru" label="Русский" />
+              <Radio value="kk" label="Қазақша" />
+              <Radio value="en" label="English" />
+            </Stack>
+          </Radio.Group>
+        </Stack>
+
+        <form onSubmit={form.onSubmit((v) => saveMutation.mutate(v))}>
+          <Stack gap="sm">
+            <Text fw={600}>{t('admin.restaurantSettings')}</Text>
+            <TextInput label={t('admin.cafeName')} {...form.getInputProps('name')} />
+            <TextInput label={t('admin.address')} {...form.getInputProps('address')} />
+            <TextInput label={t('admin.timezone')} {...form.getInputProps('timezone')} />
+            <NumberInput
+              label={t('admin.servicePercent')}
+              min={0}
+              max={100}
+              suffix=" %"
+              {...form.getInputProps('serviceChargePercent')}
+            />
+            <Button type="submit" loading={saveMutation.isPending} disabled={!restaurant}>
+              {t('app.save')}
+            </Button>
+          </Stack>
+        </form>
+      </Stack>
+    </AdminPageFrame>
   );
 }

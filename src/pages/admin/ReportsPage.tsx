@@ -3,11 +3,12 @@ import { DatePicker, Descriptions, Space, Table, Tabs, Typography } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 import { reportsApi, shiftsApi } from '../../api/endpoints';
 import { formatMoney } from '../../utils/money';
 import { formatDateTime } from '../../utils/time';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 function ReportTable({
   queryKey,
@@ -145,25 +146,20 @@ export function ReportsPage() {
   const date = day.format('YYYY-MM-DD');
 
   return (
-    <div>
-      <Space wrap style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-        <Title level={3} style={{ fontFamily: 'Fraunces, serif', margin: 0 }}>
-          {t('admin.reports')}
-        </Title>
-        <Space>
-          <Text type="secondary">{t('admin.reportDate')}</Text>
-          <DatePicker
-            value={day}
-            onChange={(v) => v && setDay(v)}
-            allowClear={false}
-            format="DD.MM.YYYY"
-            disabledDate={(d) => d.isAfter(dayjs(), 'day')}
-          />
-        </Space>
-      </Space>
-      <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-        {t('admin.reportDateHint')}
-      </Text>
+    <AdminPageFrame
+      title={t('admin.reports')}
+      hint={t('admin.reportDateHint')}
+      actions={
+        <DatePicker
+          value={day}
+          onChange={(v) => v && setDay(v)}
+          allowClear={false}
+          format="DD.MM.YYYY"
+          disabledDate={(d) => d.isAfter(dayjs(), 'day')}
+          size="large"
+        />
+      }
+    >
       <Tabs
         items={[
           {
@@ -194,6 +190,6 @@ export function ReportsPage() {
           },
         ]}
       />
-    </div>
+    </AdminPageFrame>
   );
 }

@@ -45,18 +45,24 @@ export function AdminLayout() {
       style={{ ['--admin-aside-offset']: '0px' } as CSSProperties}
       styles={{
         root: {
-          minHeight: '100dvh',
+          height: '100dvh',
+          maxHeight: '100dvh',
+          overflow: 'hidden',
         },
         main: {
-          background: '#d8d4cc',
-          minHeight: 'calc(100dvh - 48px)',
+          height: 'calc(100dvh - 48px)',
+          maxHeight: 'calc(100dvh - 48px)',
+          background: 'linear-gradient(180deg, #f3eee4 0%, #ebe4d8 100%)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehaviorY: 'contain',
           paddingBottom: onStaffWorkspace
             ? 'calc(110px + env(safe-area-inset-bottom, 0px))'
-            : 0,
-          overflow: 'auto',
+            : 'max(16px, env(safe-area-inset-bottom, 0px))',
         },
         header: {
-          background: '#2a2a2a',
+          background: '#143d34',
           borderBottom: 'none',
           zIndex: 200,
         },
@@ -64,7 +70,7 @@ export function AdminLayout() {
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
-          <Group gap="sm" wrap="nowrap">
+          <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
             {!isHub && (
               <ActionIcon
                 variant="subtle"
@@ -77,16 +83,16 @@ export function AdminLayout() {
                 <IconArrowLeft size={20} />
               </ActionIcon>
             )}
-            <Text c="#f4efe6" fw={700} style={{ letterSpacing: 0.5 }}>
+            <Text c="#f4efe6" fw={700} style={{ letterSpacing: 0.5 }} truncate>
               {t('app.name')}
             </Text>
           </Group>
-          <Text c="rgba(244,239,230,0.85)" size="sm" visibleFrom="sm">
+          <Text c="rgba(244,239,230,0.85)" size="sm" visibleFrom="md">
             {nowLabel}
           </Text>
-          <Group gap="xs" wrap="nowrap">
-            <Text c="rgba(244,239,230,0.9)" size="sm" lineClamp={1}>
-              {user?.name} · {t(`roles.${user?.role}`, { defaultValue: user?.role })}
+          <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
+            <Text c="rgba(244,239,230,0.9)" size="sm" lineClamp={1} maw={140} visibleFrom="xs">
+              {user?.name}
             </Text>
             <Tooltip label={t('admin.settings')}>
               <ActionIcon

@@ -1,17 +1,26 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { DatePicker, Descriptions, List, Spin, Table, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Group,
+  Loader,
+  Stack,
+  Table,
+  Text,
+  Title,
+} from '@mantine/core';
+import { DatePicker } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 import { reportsApi, shiftsApi } from '../../api/endpoints';
 import { formatMoney } from '../../utils/money';
 import { formatDateTime } from '../../utils/time';
 import { waiterOrderPath } from '../../utils/paths';
 import { useAuthStore } from '../../stores/authStore';
 import type { HubReportId } from '../../hub/hubConfig';
-
-const { Title, Text } = Typography;
 
 const TITLES: Partial<Record<HubReportId, string>> = {
   dashboard: 'hub.revTotal',
@@ -63,182 +72,209 @@ export function ReportViewPage() {
   });
 
   const title = t(TITLES[report] || 'admin.reports');
+  const showDate =
+    report === 'dashboard' ||
+    report === 'waiters' ||
+    report === 'products' ||
+    report === 'payments' ||
+    report === 'paid-orders' ||
+    report === 'open-orders';
 
   return (
-    <div style={{ padding: 16, background: '#e8e4dc', minHeight: '100%' }}>
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          style={{
-            minWidth: 64,
-            minHeight: 48,
-            background: '#2f6db5',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          ←
-        </button>
-        <Title level={3} style={{ margin: 0, fontFamily: 'Fraunces, serif' }}>
-          {title}
-        </Title>
-        {(report === 'dashboard' ||
-          report === 'waiters' ||
-          report === 'products' ||
-          report === 'payments' ||
-          report === 'paid-orders') && (
+    <AdminPageFrame
+      title={title}
+      actions={
+        showDate ? (
           <DatePicker
             value={day}
             onChange={(v) => v && setDay(v)}
             allowClear={false}
             format="DD.MM.YYYY"
             disabledDate={(d) => d.isAfter(dayjs(), 'day')}
+            size="large"
+            style={{ width: 160 }}
           />
-        )}
-      </div>
-
-      {report === 'dashboard' && (
-        dashboardQuery.isLoading ? (
-          <Spin />
+        ) : undefined
+      }
+    >
+      {report === 'dashboard' &&
+        (dashboardQuery.isLoading ? (
+          <Loader color="teal" />
         ) : (
-          <Descriptions bordered column={1} size="small">
-            <Descriptions.Item label={t('admin.revenueToday')}>
-              {formatMoney(dashboardQuery.data?.revenueTodayTiyns || 0)}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('admin.ordersToday')}>
-              {dashboardQuery.data?.ordersCount || 0}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('admin.avgCheck')}>
-              {formatMoney(dashboardQuery.data?.avgCheckTiyns || 0)}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('admin.guestsToday')}>
-              {dashboardQuery.data?.guestsCount || 0}
-            </Descriptions.Item>
-          </Descriptions>
-        )
-      )}
+          <Stack gap="sm">
+            {[
+              [t('admin.revenueToday'), formatMoney(dashboardQuery.data?.revenueTodayTiyns || 0)],
+              [t('admin.ordersToday'), String(dashboardQuery.data?.ordersCount || 0)],
+              [t('admin.avgCheck'), formatMoney(dashboardQuery.data?.avgCheckTiyns || 0)],
+              [t('admin.guestsToday'), String(dashboardQuery.data?.guestsCount || 0)],
+            ].map(([label, value]) => (
+              <Card key={label} padding="md" radius="md" withBorder bg="#faf7f1">
+                <Text size="sm" c="dimmed">
+                  {label}
+                </Text>
+                <Title order={3} mt={4} style={{ fontFamily: 'Fraunces, serif', color: '#143d34' }}>
+                  {value}
+                </Title>
+              </Card>
+            ))}
+          </Stack>
+        ))}
 
       {(report === 'waiters' || report === 'products' || report === 'payments') && (
-        <Table
-          rowKey={(r) => r.label}
-          loading={tableQuery.isLoading}
-          dataSource={tableQuery.data || []}
-          columns={[
-            { title: t('auth.name'), dataIndex: 'label' },
-            { title: 'Count', dataIndex: 'count' },
-            {
-              title: t('payment.amount', { defaultValue: 'Amount' }),
-              dataIndex: 'amountTiyns',
-              render: (v: number) => formatMoney(v || 0),
-            },
-          ]}
-        />
+        <Card padding={0} radius="md" withBorder bg="#faf7f1">
+          <Table.ScrollContainer minWidth={320}>
+            <Table striped highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>{t('auth.name')}</Table.Th>
+                  <Table.Th>Count</Table.Th>
+                  <Table.Th>{t('payment.amount')}</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {tableQuery.isLoading ? (
+                  <Table.Tr>
+                    <Table.Td colSpan={3}>
+                      <Loader size="sm" color="teal" />
+                    </Table.Td>
+                  </Table.Tr>
+                ) : (tableQuery.data || []).length === 0 ? (
+                  <Table.Tr>
+                    <Table.Td colSpan={3}>
+                      <Text c="dimmed">{t('app.empty')}</Text>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : (
+                  (tableQuery.data || []).map((row) => (
+                    <Table.Tr key={row.label}>
+                      <Table.Td>{row.label}</Table.Td>
+                      <Table.Td>{row.count ?? '—'}</Table.Td>
+                      <Table.Td>{formatMoney(row.amountTiyns || 0)}</Table.Td>
+                    </Table.Tr>
+                  ))
+                )}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
+        </Card>
       )}
 
       {report === 'paid-orders' && (
-        <List
-          loading={dashboardQuery.isLoading}
-          locale={{ emptyText: t('app.empty') }}
-          dataSource={dashboardQuery.data?.paidOrders || []}
-          renderItem={(order) => (
-            <List.Item>
-              <List.Item.Meta
-                title={`#${order.number ?? order._id.slice(-4)} · ${order.tableName || '—'} · ${order.waiterName || '—'}`}
-                description={
-                  order.paidAt
-                    ? `${formatMoney(order.totalTiyns)} · ${formatDateTime(order.paidAt)}`
-                    : formatMoney(order.totalTiyns)
-                }
-              />
-            </List.Item>
+        <Stack gap="sm">
+          {dashboardQuery.isLoading ? (
+            <Loader color="teal" />
+          ) : (dashboardQuery.data?.paidOrders || []).length === 0 ? (
+            <Text c="dimmed">{t('app.empty')}</Text>
+          ) : (
+            (dashboardQuery.data?.paidOrders || []).map((order) => (
+              <Card key={order._id} padding="md" radius="md" withBorder bg="#faf7f1">
+                <Text fw={700}>
+                  #{order.number ?? order._id.slice(-4)} · {order.tableName || '—'}
+                </Text>
+                <Text size="sm" c="dimmed">
+                  {order.waiterName || '—'}
+                  {order.paidAt ? ` · ${formatDateTime(order.paidAt)}` : ''}
+                </Text>
+                <Text fw={600} mt={6} c="#1f6f5b">
+                  {formatMoney(order.totalTiyns)}
+                </Text>
+              </Card>
+            ))
           )}
-        />
+        </Stack>
       )}
 
       {report === 'open-orders' && (
-        <List
-          loading={dashboardQuery.isLoading}
-          locale={{ emptyText: t('app.empty') }}
-          dataSource={dashboardQuery.data?.openOrders || []}
-          renderItem={(order) => (
-            <List.Item
-              actions={[
-                <button
-                  key="open"
-                  type="button"
-                  onClick={() => navigate(waiterOrderPath(order._id, user?.role))}
-                  style={{
-                    background: '#1f6f5b',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '8px 14px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {t('waiter.openOrder')}
-                </button>,
-              ]}
-            >
-              <List.Item.Meta
-                title={`#${order.number ?? order._id.slice(-4)} · ${order.tableName || '—'}`}
-                description={`${formatMoney(order.totalTiyns)} · ${t(`orderStatus.${order.status}`)}`}
-              />
-            </List.Item>
+        <Stack gap="sm">
+          {dashboardQuery.isLoading ? (
+            <Loader color="teal" />
+          ) : (dashboardQuery.data?.openOrders || []).length === 0 ? (
+            <Text c="dimmed">{t('app.empty')}</Text>
+          ) : (
+            (dashboardQuery.data?.openOrders || []).map((order) => (
+              <Card
+                key={order._id}
+                padding="md"
+                radius="md"
+                withBorder
+                bg="#faf7f1"
+                style={{ cursor: 'pointer' }}
+                onClick={() => navigate(waiterOrderPath(order._id, user?.role))}
+              >
+                <Group justify="space-between" align="flex-start" wrap="nowrap" gap="sm">
+                  <div style={{ minWidth: 0 }}>
+                    <Text fw={700}>
+                      #{order.number ?? order._id.slice(-4)} · {order.tableName || '—'}
+                    </Text>
+                    <Text size="sm" c="dimmed">
+                      {t(`orderStatus.${order.status}`)} · {formatMoney(order.totalTiyns)}
+                    </Text>
+                  </div>
+                  <Button
+                    size="sm"
+                    color="teal"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(waiterOrderPath(order._id, user?.role));
+                    }}
+                  >
+                    {t('waiter.openOrder')}
+                  </Button>
+                </Group>
+              </Card>
+            ))
           )}
-        />
+        </Stack>
       )}
 
       {report === 'shifts' && (
-        <>
-          <Table
-            rowKey="_id"
-            loading={shiftsQuery.isLoading}
-            dataSource={shiftsQuery.data || []}
-            pagination={{ pageSize: 10 }}
-            onRow={(row) => ({
-              onClick: () => setSelectedShift(row._id),
-              style: {
-                cursor: 'pointer',
-                background: selectedShift === row._id ? 'rgba(47,109,181,0.12)' : undefined,
-              },
-            })}
-            columns={[
-              {
-                title: t('admin.openedAt'),
-                dataIndex: 'openedAt',
-                render: (v: string) => formatDateTime(v),
-              },
-              {
-                title: t('admin.status'),
-                dataIndex: 'status',
-              },
-              {
-                title: t('cashier.openingCash'),
-                dataIndex: 'openingCashTiyns',
-                render: (v: number) => formatMoney(v || 0),
-              },
-            ]}
-          />
-          {selectedShift && shiftDetail.data && (
-            <Descriptions bordered size="small" style={{ marginTop: 16 }} column={1}>
-              <Descriptions.Item label={t('admin.reportPayments')}>
-                {shiftDetail.data.paymentsCount} · {formatMoney(shiftDetail.data.paymentsTotalTiyns)}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('admin.ordersToday')}>
-                {shiftDetail.data.ordersCount} ({t('orderStatus.PAID')}: {shiftDetail.data.paidOrders})
-              </Descriptions.Item>
-            </Descriptions>
+        <Stack gap="md">
+          <Card padding={0} radius="md" withBorder bg="#faf7f1">
+            <Table.ScrollContainer minWidth={320}>
+              <Table striped highlightOnHover>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>{t('admin.openedAt')}</Table.Th>
+                    <Table.Th>{t('admin.status')}</Table.Th>
+                    <Table.Th>{t('cashier.openingCash')}</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {(shiftsQuery.data || []).map((row) => (
+                    <Table.Tr
+                      key={row._id}
+                      style={{
+                        cursor: 'pointer',
+                        background:
+                          selectedShift === row._id ? 'rgba(31,111,91,0.1)' : undefined,
+                      }}
+                      onClick={() => setSelectedShift(row._id)}
+                    >
+                      <Table.Td>{formatDateTime(row.openedAt)}</Table.Td>
+                      <Table.Td>{row.status}</Table.Td>
+                      <Table.Td>{formatMoney(row.openingCashTiyns || 0)}</Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>
+          </Card>
+          {selectedShift && shiftDetail.data ? (
+            <Card padding="md" radius="md" withBorder bg="#faf7f1">
+              <Text>
+                {t('admin.reportPayments')}: {shiftDetail.data.paymentsCount} ·{' '}
+                {formatMoney(shiftDetail.data.paymentsTotalTiyns)}
+              </Text>
+              <Text mt={6}>
+                {t('admin.ordersToday')}: {shiftDetail.data.ordersCount} (
+                {t('orderStatus.PAID')}: {shiftDetail.data.paidOrders})
+              </Text>
+            </Card>
+          ) : (
+            <Text c="dimmed">{t('admin.selectShift')}</Text>
           )}
-          {!selectedShift && (
-            <Text type="secondary" style={{ display: 'block', marginTop: 12 }}>
-              {t('admin.selectShift')}
-            </Text>
-          )}
-        </>
+        </Stack>
       )}
-    </div>
+    </AdminPageFrame>
   );
 }
