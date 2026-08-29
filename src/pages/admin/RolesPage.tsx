@@ -10,13 +10,13 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconEdit, IconPlus } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { rolesApi } from '../../api/endpoints';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 import type { Role } from '../../types';
 import { ALL_PERMISSIONS } from '../../utils/permissions';
 
@@ -75,14 +75,14 @@ export function RolesPage() {
   };
 
   return (
-    <Stack gap="md">
-      <Group justify="space-between">
-        <Title order={2}>{t('admin.roles')}</Title>
+    <AdminPageFrame
+      title={t('admin.roles')}
+      actions={
         <Button leftSection={<IconPlus size={16} />} onClick={openCreate}>
           {t('app.create')}
         </Button>
-      </Group>
-
+      }
+    >
       {isLoading ? (
         <Text c="dimmed">{t('app.loading')}</Text>
       ) : (
@@ -92,7 +92,11 @@ export function RolesPage() {
               key={role._id}
               gap="xs"
               p="md"
-              style={{ border: '1px solid var(--mantine-color-gray-3)', borderRadius: 12 }}
+              style={{
+                border: '1px solid rgba(20,61,52,0.12)',
+                borderRadius: 12,
+                background: '#faf7f1',
+              }}
             >
               <Group justify="space-between">
                 <Text fw={700}>{role.name}</Text>
@@ -107,7 +111,7 @@ export function RolesPage() {
               </Group>
               <Group gap={6}>
                 {(role.permissions || []).map((p) => (
-                  <Badge key={p} variant="light" color="cyan">
+                  <Badge key={p} variant="light" color="teal">
                     {p}
                   </Badge>
                 ))}
@@ -149,6 +153,6 @@ export function RolesPage() {
           </Stack>
         </form>
       </Modal>
-    </Stack>
+    </AdminPageFrame>
   );
 }

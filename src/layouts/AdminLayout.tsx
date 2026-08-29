@@ -58,7 +58,7 @@ export function AdminLayout() {
           WebkitOverflowScrolling: 'touch',
           overscrollBehaviorY: 'contain',
           paddingBottom: onStaffWorkspace
-            ? 'calc(110px + env(safe-area-inset-bottom, 0px))'
+            ? 'calc(160px + env(safe-area-inset-bottom, 0px))'
             : 'max(16px, env(safe-area-inset-bottom, 0px))',
         },
         header: {

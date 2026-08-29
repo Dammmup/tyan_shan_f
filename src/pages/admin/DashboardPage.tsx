@@ -1,6 +1,7 @@
 import { SimpleGrid, Stack, Text } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { AdminNavTile, AdminNavTileGrid } from '../../components/AdminNavTile';
 import { AdminPageFrame } from '../../components/AdminPageFrame';
 
 type HubTile = {
@@ -62,44 +63,6 @@ const GROUPS: HubGroup[] = [
   },
 ];
 
-function TileButton({
-  label,
-  color,
-  onClick,
-}: {
-  label: string;
-  color: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 64,
-        width: '100%',
-        padding: '14px 12px',
-        border: 'none',
-        borderRadius: 8,
-        background: color,
-        color: '#fff',
-        fontWeight: 600,
-        fontSize: 15,
-        lineHeight: 1.25,
-        textAlign: 'center',
-        cursor: 'pointer',
-        touchAction: 'manipulation',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
-      }}
-    >
-      {label}
-    </button>
-  );
-}
-
 export function DashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -126,16 +89,16 @@ export function DashboardPage() {
             >
               {t(group.titleKey)}
             </Text>
-            <SimpleGrid cols={{ base: 1, xs: 2 }} spacing={10}>
+            <AdminNavTileGrid>
               {group.tiles.map((tile) => (
-                <TileButton
+                <AdminNavTile
                   key={tile.key}
                   label={t(tile.labelKey)}
                   color={group.color}
                   onClick={() => openTile(tile)}
                 />
               ))}
-            </SimpleGrid>
+            </AdminNavTileGrid>
           </Stack>
         ))}
       </SimpleGrid>

@@ -98,6 +98,7 @@
     "precheckPrinted": "Предчек отправлен на печать",
     "precheckOnce": "Предчек уже напечатан. Повтор только у администратора.",
     "precheckDone": "Предчек готов",
+    "moreActions": "Ещё",
     "total": "Итого",
     "payLink": "К оплате",
     "releaseTable": "Освободить стол",

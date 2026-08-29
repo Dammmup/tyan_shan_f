@@ -1,10 +1,9 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AdminNavTile, AdminNavTileGrid } from '../../components/AdminNavTile';
 import { AdminPageFrame } from '../../components/AdminPageFrame';
 import { HUB_MENUS, resolveHubAction } from '../../hub/hubConfig';
-
-const TILE_BLUE = '#2f6db5';
 
 export function HubMenuPage() {
   const { menuId = '' } = useParams();
@@ -18,9 +17,7 @@ export function HubMenuPage() {
   if (!menu) {
     return (
       <AdminPageFrame title={t('app.empty')}>
-        <button type="button" onClick={() => navigate('/admin')}>
-          {t('hub.toHome')}
-        </button>
+        <AdminNavTile label={t('hub.toHome')} onClick={() => navigate('/admin')} />
       </AdminPageFrame>
     );
   }
@@ -32,21 +29,13 @@ export function HubMenuPage() {
 
   return (
     <AdminPageFrame title={title}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-          gap: 10,
-        }}
-      >
-        <button type="button" onClick={goBack} aria-label={t('app.back')} style={tileStyle()}>
-          ← {t('app.back')}
-        </button>
+      <AdminNavTileGrid>
+        <AdminNavTile label={`← ${t('app.back')}`} color="#5a6b64" onClick={goBack} />
         {items.map((item) => (
-          <button
+          <AdminNavTile
             key={item.id}
-            type="button"
-            style={tileStyle()}
+            label={t(item.labelKey)}
+            color={item.id === 'close' ? '#8b3a4a' : '#1f6f5b'}
             onClick={() => {
               if (item.menu) {
                 navigate(`/admin/hub/${item.menu}`);
@@ -54,28 +43,9 @@ export function HubMenuPage() {
               }
               if (item.action) navigate(resolveHubAction(item.action));
             }}
-          >
-            {t(item.labelKey)}
-          </button>
+          />
         ))}
-      </div>
+      </AdminNavTileGrid>
     </AdminPageFrame>
   );
-}
-
-function tileStyle(): CSSProperties {
-  return {
-    minHeight: 72,
-    padding: '14px 12px',
-    border: '1px solid rgba(0,0,0,0.12)',
-    borderRadius: 8,
-    background: TILE_BLUE,
-    color: '#fff',
-    fontWeight: 600,
-    fontSize: 15,
-    lineHeight: 1.25,
-    textAlign: 'center',
-    cursor: 'pointer',
-    touchAction: 'manipulation',
-  };
 }

@@ -14,7 +14,6 @@ import {
   Table,
   Text,
   TextInput,
-  Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
@@ -22,6 +21,7 @@ import { notifications } from '@mantine/notifications';
 import { IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { printersApi } from '../../api/endpoints';
+import { AdminPageFrame } from '../../components/AdminPageFrame';
 import type { Printer, ProductionCenter } from '../../types';
 import { ALL_CENTERS, centerLabel } from '../../utils/centers';
 
@@ -112,15 +112,15 @@ export function PrintersPage() {
   };
 
   return (
-    <Stack gap="md">
-      <Group justify="space-between">
-        <Title order={2}>{t('admin.printers')}</Title>
+    <AdminPageFrame
+      title={t('admin.printers')}
+      actions={
         <Button leftSection={<IconPlus size={16} />} onClick={openCreate}>
           {t('app.create')}
         </Button>
-      </Group>
-
-      <Paper p="md" withBorder>
+      }
+    >
+      <Paper p="md" withBorder radius="md" bg="rgba(250,247,241,0.9)">
         <Table.ScrollContainer minWidth={720}>
           <Table highlightOnHover>
             <Table.Thead>
@@ -211,6 +211,6 @@ export function PrintersPage() {
           </Stack>
         </form>
       </Modal>
-    </Stack>
+    </AdminPageFrame>
   );
 }

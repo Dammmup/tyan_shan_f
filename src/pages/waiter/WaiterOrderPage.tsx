@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
@@ -21,6 +21,7 @@ import {
   ArrowLeftOutlined,
   DeleteOutlined,
   DollarOutlined,
+  EllipsisOutlined,
   FileTextOutlined,
   PercentageOutlined,
   PlusOutlined,
@@ -83,6 +84,9 @@ export function WaiterOrderPage() {
   const [prepaidOpen, setPrepaidOpen] = useState(false);
   const [precheckPreviewOpen, setPrecheckPreviewOpen] = useState(false);
   const [releaseOpen, setReleaseOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const bottomBarRef = useRef<HTMLDivElement>(null);
+  const [bottomBarH, setBottomBarH] = useState(220);
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId],
@@ -237,6 +241,19 @@ export function WaiterOrderPage() {
     setPrecheckPreviewOpen(true);
   };
 
+  useEffect(() => {
+    const el = bottomBarRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const apply = () => {
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      if (h > 0) setBottomBarH(h);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isAdmin, order?.items?.length, canPrintPrecheck, newItems.length]);
+
   const tableOptions = useMemo(() => {
     const list = tablesQuery.data || [];
     const filtered = elevated
@@ -263,7 +280,13 @@ export function WaiterOrderPage() {
   }
 
   return (
-    <div style={{ minHeight: embedded ? undefined : '100vh', background: '#ebe4d8', paddingBottom: 88 }}>
+    <div
+      style={{
+        minHeight: embedded ? undefined : '100vh',
+        background: '#ebe4d8',
+        paddingBottom: bottomBarH + 40,
+      }}
+    >
       {!embedded ? (
         <StaffHeader
           title={`${t('waiter.order')} #${order?.number ?? orderId.slice(-4)}`}
@@ -404,6 +427,7 @@ export function WaiterOrderPage() {
       </div>
 
       <div
+        ref={bottomBarRef}
         className={`staff-bottom-bar${embedded ? ' staff-bottom-bar--admin' : ''}`}
         style={{
           position: 'fixed',
@@ -420,7 +444,7 @@ export function WaiterOrderPage() {
           boxSizing: 'border-box',
         }}
       >
-        <Button size="large" style={{ flex: '1 1 140px' }} onClick={() => setCartOpen(true)}>
+        <Button size="large" style={{ flex: '1 1 100%' }} onClick={() => setCartOpen(true)}>
           {t('waiter.cart')} ({order?.items?.length || 0}) · {formatMoney(order?.totalTiyns || 0)}
         </Button>
         <Button
@@ -436,18 +460,8 @@ export function WaiterOrderPage() {
         </Button>
         <Button
           size="large"
-          icon={<PercentageOutlined />}
-          disabled={!order?.items?.length || !allowDiscount}
-          onClick={() => setDiscountOpen(true)}
-          style={{ flex: '1 1 100px' }}
-        >
-          {t('waiter.discount')}
-        </Button>
-        <Button
-          size="large"
           icon={<FileTextOutlined />}
           disabled={!canPrintPrecheck}
-          loading={false}
           onClick={openPrecheckPreview}
           style={{ flex: '1 1 100px' }}
         >
@@ -455,38 +469,77 @@ export function WaiterOrderPage() {
         </Button>
         <Button
           size="large"
-          icon={<DollarOutlined />}
-          disabled={order?.status === 'PAID' || order?.status === 'CANCELLED'}
-          onClick={() => setPrepaidOpen(true)}
-          style={{ flex: '1 1 100px' }}
+          icon={<EllipsisOutlined />}
+          onClick={() => setMoreOpen(true)}
+          style={{ flex: '1 1 90px' }}
         >
-          {t('waiter.prepaid')}
+          {t('waiter.moreActions')}
         </Button>
-        <Button
-          size="large"
-          icon={<SwapOutlined />}
-          disabled={!transferableItems.length}
-          onClick={() => {
-            setSelectedItemIds(transferableItems.map((i) => i._id));
-            setTransferOpen(true);
-          }}
-          style={{ flex: '1 1 100px' }}
-        >
-          {t('waiter.transfer')}
-        </Button>
-        {isAdmin && (
+      </div>
+
+      <Drawer
+        title={t('waiter.moreActions')}
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        placement="bottom"
+        height="auto"
+        styles={{ body: { paddingBottom: 24 } }}
+      >
+        <Flex vertical gap={10}>
           <Button
             size="large"
-            type="primary"
-            icon={<WalletOutlined />}
-            disabled={order?.status === 'PAID' || order?.status === 'CANCELLED'}
-            onClick={() => setReleaseOpen(true)}
-            style={{ flex: '1 1 120px' }}
+            block
+            icon={<PercentageOutlined />}
+            disabled={!order?.items?.length || !allowDiscount}
+            onClick={() => {
+              setMoreOpen(false);
+              setDiscountOpen(true);
+            }}
           >
-            {t('waiter.releaseTable')}
+            {t('waiter.discount')}
           </Button>
-        )}
-      </div>
+          <Button
+            size="large"
+            block
+            icon={<DollarOutlined />}
+            disabled={order?.status === 'PAID' || order?.status === 'CANCELLED'}
+            onClick={() => {
+              setMoreOpen(false);
+              setPrepaidOpen(true);
+            }}
+          >
+            {t('waiter.prepaid')}
+          </Button>
+          <Button
+            size="large"
+            block
+            icon={<SwapOutlined />}
+            disabled={!transferableItems.length}
+            onClick={() => {
+              setSelectedItemIds(transferableItems.map((i) => i._id));
+              setMoreOpen(false);
+              setTransferOpen(true);
+            }}
+          >
+            {t('waiter.transfer')}
+          </Button>
+          {isAdmin && (
+            <Button
+              type="primary"
+              size="large"
+              block
+              icon={<WalletOutlined />}
+              disabled={order?.status === 'PAID' || order?.status === 'CANCELLED'}
+              onClick={() => {
+                setMoreOpen(false);
+                setReleaseOpen(true);
+              }}
+            >
+              {t('waiter.releaseTable')}
+            </Button>
+          )}
+        </Flex>
+      </Drawer>
 
       <Modal
         open={Boolean(product)}

@@ -98,6 +98,7 @@
     "precheckPrinted": "Pre-check sent to printer",
     "precheckOnce": "Pre-check already printed. Reprint is admin-only.",
     "precheckDone": "Pre-check done",
+    "moreActions": "More",
     "total": "Total",
     "payLink": "Go to payment",
     "releaseTable": "Release table",
