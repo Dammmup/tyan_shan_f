@@ -5,6 +5,7 @@ import type {
   Discount,
   Employee,
   Hall,
+  Ingredient,
   KitchenOrder,
   KitchenStatus,
   Modifier,
@@ -15,6 +16,7 @@ import type {
   Printer,
   Product,
   ProductAvailability,
+  ProductRecipe,
   Role,
   Restaurant,
   Shift,
@@ -64,6 +66,16 @@ export const menuApi = {
   stock: () => api.get<Product[]>('/menu/stock').then((r) => r.data),
   adjustStock: (id: string, body: { delta: number; reason?: string }) =>
     api.patch<Product>(`/menu/products/${id}/stock`, body).then((r) => r.data),
+  ingredients: () => api.get<Ingredient[]>('/menu/ingredients').then((r) => r.data),
+  createIngredient: (body: { name: string; unit?: string; stockQty?: number }) =>
+    api.post<Ingredient>('/menu/ingredients', body).then((r) => r.data),
+  adjustIngredientStock: (id: string, body: { delta: number; reason?: string }) =>
+    api.patch<Ingredient>(`/menu/ingredients/${id}/stock`, body).then((r) => r.data),
+  removeIngredient: (id: string) => api.delete(`/menu/ingredients/${id}`),
+  getRecipe: (productId: string) =>
+    api.get<ProductRecipe | null>(`/menu/products/${productId}/recipe`).then((r) => r.data),
+  upsertRecipe: (productId: string, lines: { ingredientId: string; qty: number }[]) =>
+    api.put<ProductRecipe>(`/menu/products/${productId}/recipe`, { lines }).then((r) => r.data),
   createProduct: (body: Record<string, unknown>) =>
     api.post<Product>('/menu/products', body).then((r) => r.data),
   updateProduct: (id: string, body: Record<string, unknown>) =>
@@ -271,7 +283,7 @@ export const restaurantsApi = {
   get: (id: string) => api.get<Restaurant>(`/restaurants/${id}`).then((r) => r.data),
   update: (
     id: string,
-    body: Partial<Pick<Restaurant, 'name' | 'address' | 'timezone' | 'serviceChargePercent'>>,
+    body: Partial<Pick<Restaurant, 'name' | 'address' | 'timezone' | 'serviceChargePercent' | 'fiscal'>>,
   ) => api.patch<Restaurant>(`/restaurants/${id}`, body).then((r) => r.data),
 };
 

@@ -44,17 +44,18 @@ function Ticket({
   return (
     <div
       style={{
-        background: '#faf7f1',
+        background: 'var(--card, #faf7f1)',
         borderRadius: 12,
-        padding: 12,
+        padding: '14px 12px',
         marginBottom: 10,
         border: '1px solid #d4cbbd',
         boxShadow: '0 4px 12px rgba(20,61,52,0.08)',
+        touchAction: 'manipulation',
       }}
     >
       <Flex justify="space-between" align="flex-start" gap={8}>
-        <div>
-          <Title level={5} style={{ margin: 0, fontFamily: 'Fraunces, serif' }}>
+        <div style={{ minWidth: 0 }}>
+          <Title level={5} style={{ margin: 0, fontFamily: 'Fraunces, serif', color: 'var(--brand, #143d34)' }}>
             #{order.orderNumber ?? order.orderId.slice(-4)}
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>

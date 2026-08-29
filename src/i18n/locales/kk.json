@@ -225,7 +225,20 @@
     "stockDelta": "Өзгеріс",
     "stockDeltaHint": "Плюс — кіріс, минус — шығыс",
     "stockReason": "Ескертпе",
-    "onePrinterHint": "Кафеге бір белсенді термопринтер жеткілікті."
+    "onePrinterHint": "Кафеге бір белсенді термопринтер жеткілікті.",
+    "stockDishes": "Тағамдар",
+    "stockIngredients": "Ингредиенттер",
+    "stockRecipes": "Техкарталар",
+    "stockUnit": "Өлш.",
+    "stockPerPortion": "Порцияға",
+    "fiscalTitle": "Фискализация (Webkassa / ОФД)",
+    "fiscalHint": "mock — жергілікті чек. webkassa — API Authorize+Check.",
+    "fiscalMode": "Режим",
+    "fiscalApiUrl": "API URL",
+    "fiscalLogin": "Login",
+    "fiscalPassword": "Password",
+    "fiscalCashbox": "CashboxUniqueNumber",
+    "fiscalApiKey": "API Key (опц.)"
   },
   "hub": {
     "groupOrder": "Тапсырыс",

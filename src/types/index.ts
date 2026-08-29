@@ -247,6 +247,15 @@ export interface Role {
   permissions: string[];
 }
 
+export interface FiscalConfig {
+  mode?: string;
+  apiUrl?: string;
+  login?: string;
+  password?: string;
+  cashboxUniqueNumber?: string;
+  apiKey?: string;
+}
+
 export interface Restaurant {
   _id: string;
   name: string;
@@ -254,6 +263,26 @@ export interface Restaurant {
   timezone?: string;
   serviceChargePercent?: number;
   isActive?: boolean;
+  fiscal?: FiscalConfig;
+}
+
+export interface Ingredient {
+  _id: string;
+  name: string;
+  unit: string;
+  stockQty: number;
+  isActive?: boolean;
+}
+
+export interface RecipeLine {
+  ingredientId: string;
+  qty: number;
+}
+
+export interface ProductRecipe {
+  _id?: string;
+  productId: string;
+  lines: RecipeLine[];
 }
 
 export interface Printer {

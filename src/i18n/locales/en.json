@@ -225,7 +225,20 @@
     "stockDelta": "Change",
     "stockDeltaHint": "Plus = receipt, minus = write-off",
     "stockReason": "Note",
-    "onePrinterHint": "One active thermal printer is enough for the cafe."
+    "onePrinterHint": "One active thermal printer is enough for the cafe.",
+    "stockDishes": "Dishes",
+    "stockIngredients": "Ingredients",
+    "stockRecipes": "Recipes",
+    "stockUnit": "Unit",
+    "stockPerPortion": "Per portion",
+    "fiscalTitle": "Fiscal (Webkassa / OFD)",
+    "fiscalHint": "mock prints locally without OFD. webkassa uses Authorize+Check API.",
+    "fiscalMode": "Mode",
+    "fiscalApiUrl": "API URL",
+    "fiscalLogin": "Login",
+    "fiscalPassword": "Password",
+    "fiscalCashbox": "CashboxUniqueNumber",
+    "fiscalApiKey": "API Key (optional)"
   },
   "hub": {
     "groupOrder": "Order",
