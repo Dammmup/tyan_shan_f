@@ -138,6 +138,8 @@ export interface Product {
   isActive?: boolean;
   modifierGroupIds?: string[];
   modifierGroups?: ModifierGroup[];
+  trackStock?: boolean;
+  stockQty?: number;
 }
 
 export interface OrderItemModifier {

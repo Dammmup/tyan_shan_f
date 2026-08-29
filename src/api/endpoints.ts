@@ -61,6 +61,9 @@ export const menuApi = {
   removeCategory: (id: string) => api.delete(`/menu/categories/${id}`),
   products: (categoryId?: string) =>
     api.get<Product[]>('/menu/products', { params: { categoryId } }).then((r) => r.data),
+  stock: () => api.get<Product[]>('/menu/stock').then((r) => r.data),
+  adjustStock: (id: string, body: { delta: number; reason?: string }) =>
+    api.patch<Product>(`/menu/products/${id}/stock`, body).then((r) => r.data),
   createProduct: (body: Record<string, unknown>) =>
     api.post<Product>('/menu/products', body).then((r) => r.data),
   updateProduct: (id: string, body: Record<string, unknown>) =>

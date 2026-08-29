@@ -7,6 +7,12 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --app-vh: 100dvh;
+  --brand: #143d34;
+  --brand-mid: #1f6f5b;
+  --cream: #ebe4d8;
+  --cream-top: #f3eee4;
+  --card: #faf7f1;
+  --ink: #1c2a24;
 }
 
 * {

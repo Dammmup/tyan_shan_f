@@ -187,7 +187,7 @@ export function KitchenPage() {
     <div style={{ minHeight: embedded ? undefined : '100vh', background: '#ebe4d8' }}>
       {!embedded && <StaffHeader title={t('kitchen.title')} />}
       {embedded && (
-        <Title level={3} style={{ marginTop: 0, fontFamily: 'Fraunces, serif' }}>
+        <Title level={3} style={{ marginTop: 0, marginBottom: 12, fontFamily: 'Fraunces, serif', color: 'var(--brand, #143d34)' }}>
           {t('kitchen.title')}
         </Title>
       )}

@@ -137,8 +137,12 @@ export function CashierPage() {
         ],
       });
     },
-    onSuccess: async () => {
-      message.success(t('app.success'));
+    onSuccess: async (res) => {
+      const fiscalNo = (res as { payment?: { fiscalReceiptNo?: string } })?.payment
+        ?.fiscalReceiptNo;
+      message.success(
+        fiscalNo ? `${t('app.success')} · ${t('cashier.fiscalReceipt')}: ${fiscalNo}` : t('app.success'),
+      );
       setListTab('paid');
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['orders'] }),
@@ -224,7 +228,7 @@ export function CashierPage() {
       )}
       {embedded && (
         <Space wrap style={{ marginBottom: 12 }}>
-          <Title level={3} style={{ margin: 0, fontFamily: 'Fraunces, serif', marginRight: 12 }}>
+          <Title level={3} style={{ margin: 0, fontFamily: 'Fraunces, serif', color: 'var(--brand, #143d34)', marginRight: 12 }}>
             {t('cashier.title')}
           </Title>
           {!shiftOpen ? (

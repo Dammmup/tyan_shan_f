@@ -1,4 +1,4 @@
-/** Nested admin hub menus (r_k-style). Leaf nodes navigate to path or report view. */
+/** Nested admin hub menus. Leaf nodes navigate to real screens only. */
 
 export type HubLeafAction =
   | { type: 'path'; to: string }
@@ -25,15 +25,12 @@ export type HubReportId =
   | 'floor'
   | 'pos'
   | 'pos-paid'
-  | 'pos-close'
-  | 'pos-cash-in'
-  | 'pos-cash-out'
+  | 'stock'
   | 'kitchen';
 
 export type HubMenuItem = {
   id: string;
   labelKey: string;
-  /** Nested menu id under /admin/hub/:menuId */
   menu?: string;
   action?: HubLeafAction;
 };
@@ -50,130 +47,6 @@ export const HUB_MENUS: Record<string, HubMenu> = {
     id: 'cash-reports',
     titleKey: 'hub.cashReportsTitle',
     items: [
-      { id: 'balance', labelKey: 'hub.repBalance', menu: 'cash-balance' },
-      { id: 'revenue', labelKey: 'hub.repRevenue', menu: 'cash-revenue' },
-      { id: 'expense', labelKey: 'hub.repExpense', menu: 'cash-expense' },
-      { id: 'special', labelKey: 'hub.repSpecial', menu: 'cash-special' },
-      { id: 'fiscal', labelKey: 'hub.repFiscal', menu: 'cash-fiscal' },
-      { id: 'close', labelKey: 'hub.closeBracket', action: { type: 'close' } },
-    ],
-  },
-  'cash-balance': {
-    id: 'cash-balance',
-    titleKey: 'hub.cashReportsTitle',
-    parentId: 'cash-reports',
-    items: [
-      {
-        id: 'intention',
-        labelKey: 'hub.balanceIntention',
-        action: { type: 'report', report: 'paid-orders' },
-      },
-      {
-        id: 'cash-balance-report',
-        labelKey: 'hub.balanceCash',
-        action: { type: 'report', report: 'shifts' },
-      },
-      {
-        id: 'system-balance',
-        labelKey: 'hub.balanceSystem',
-        action: { type: 'report', report: 'dashboard' },
-      },
-    ],
-  },
-  'cash-revenue': {
-    id: 'cash-revenue',
-    titleKey: 'hub.cashReportsTitle',
-    parentId: 'cash-reports',
-    items: [
-      {
-        id: 'waiter-balance',
-        labelKey: 'hub.revWaiterBalance',
-        action: { type: 'report', report: 'waiters' },
-      },
-      {
-        id: 'expeditors',
-        labelKey: 'hub.revExpeditors',
-        action: { type: 'report', report: 'waiters' },
-      },
-      {
-        id: 'total-rev',
-        labelKey: 'hub.revTotal',
-        action: { type: 'report', report: 'dashboard' },
-      },
-      {
-        id: 'by-cashiers',
-        labelKey: 'hub.revByCashiers',
-        action: { type: 'report', report: 'payments' },
-      },
-      {
-        id: 'by-waiters',
-        labelKey: 'hub.revByWaiters',
-        action: { type: 'report', report: 'waiters' },
-      },
-      {
-        id: 'by-depts',
-        labelKey: 'hub.revByDepts',
-        action: { type: 'report', report: 'products' },
-      },
-      {
-        id: 'by-stations',
-        labelKey: 'hub.revByStations',
-        action: { type: 'report', report: 'products' },
-      },
-    ],
-  },
-  'cash-expense': {
-    id: 'cash-expense',
-    titleKey: 'hub.cashReportsTitle',
-    parentId: 'cash-reports',
-    items: [
-      {
-        id: 'running-out',
-        labelKey: 'hub.expRunningOut',
-        action: { type: 'report', report: 'stop-list' },
-      },
-      {
-        id: 'forbidden',
-        labelKey: 'hub.expForbidden',
-        action: { type: 'report', report: 'hidden-dishes' },
-      },
-      {
-        id: 'dish-usage',
-        labelKey: 'hub.expDishUsage',
-        action: { type: 'report', report: 'products' },
-      },
-      {
-        id: 'combo-usage',
-        labelKey: 'hub.expComboUsage',
-        action: { type: 'report', report: 'products' },
-      },
-      {
-        id: 'stock',
-        labelKey: 'hub.expStock',
-        action: { type: 'report', report: 'menu' },
-      },
-      {
-        id: 'goods-in',
-        labelKey: 'hub.expGoodsIn',
-        action: { type: 'report', report: 'audit' },
-      },
-      {
-        id: 'by-cat',
-        labelKey: 'hub.expByCategory',
-        action: { type: 'report', report: 'products' },
-      },
-      {
-        id: 'mod-stop',
-        labelKey: 'hub.expModStop',
-        action: { type: 'report', report: 'stop-list' },
-      },
-    ],
-  },
-  'cash-special': {
-    id: 'cash-special',
-    titleKey: 'hub.cashReportsTitle',
-    parentId: 'cash-reports',
-    items: [
       {
         id: 'open-orders',
         labelKey: 'hub.specOpenOrders',
@@ -185,37 +58,56 @@ export const HUB_MENUS: Record<string, HubMenu> = {
         action: { type: 'report', report: 'paid-orders' },
       },
       {
-        id: 'audit',
-        labelKey: 'hub.specAudit',
-        action: { type: 'report', report: 'audit' },
+        id: 'by-waiters',
+        labelKey: 'admin.reportWaiters',
+        action: { type: 'report', report: 'waiters' },
+      },
+      {
+        id: 'by-products',
+        labelKey: 'admin.reportProducts',
+        action: { type: 'report', report: 'products' },
+      },
+      {
+        id: 'by-payments',
+        labelKey: 'admin.reportPayments',
+        action: { type: 'report', report: 'payments' },
+      },
+      {
+        id: 'by-shifts',
+        labelKey: 'admin.reportShifts',
+        action: { type: 'report', report: 'shifts' },
+      },
+      {
+        id: 'total-rev',
+        labelKey: 'hub.revTotal',
+        action: { type: 'report', report: 'dashboard' },
       },
       {
         id: 'discounts',
         labelKey: 'hub.specDiscounts',
         action: { type: 'path', to: '/admin/discounts' },
       },
-    ],
-  },
-  'cash-fiscal': {
-    id: 'cash-fiscal',
-    titleKey: 'hub.cashReportsTitle',
-    parentId: 'cash-reports',
-    items: [
       {
-        id: 'printers',
-        labelKey: 'hub.fiscalPrinters',
-        action: { type: 'report', report: 'printers' },
+        id: 'stock',
+        labelKey: 'hub.expStock',
+        action: { type: 'path', to: '/admin/stock' },
       },
       {
-        id: 'shift',
-        labelKey: 'hub.fiscalShift',
-        action: { type: 'report', report: 'shifts' },
+        id: 'stop-list',
+        labelKey: 'hub.expRunningOut',
+        action: { type: 'report', report: 'stop-list' },
       },
       {
-        id: 'payments',
-        labelKey: 'hub.fiscalPayments',
-        action: { type: 'report', report: 'payments' },
+        id: 'audit',
+        labelKey: 'hub.specAudit',
+        action: { type: 'path', to: '/admin/audit' },
       },
+      {
+        id: 'printer',
+        labelKey: 'admin.printers',
+        action: { type: 'path', to: '/admin/printers' },
+      },
+      { id: 'close', labelKey: 'hub.closeBracket', action: { type: 'close' } },
     ],
   },
   'view-reports': {
@@ -246,6 +138,16 @@ export const HUB_MENUS: Record<string, HubMenu> = {
         id: 'dashboard',
         labelKey: 'hub.revTotal',
         action: { type: 'report', report: 'dashboard' },
+      },
+      {
+        id: 'paid-orders',
+        labelKey: 'hub.closedOrders',
+        action: { type: 'report', report: 'paid-orders' },
+      },
+      {
+        id: 'open-orders',
+        labelKey: 'admin.openTables',
+        action: { type: 'report', report: 'open-orders' },
       },
       { id: 'close', labelKey: 'hub.closeBracket', action: { type: 'close' } },
     ],
@@ -309,6 +211,11 @@ export const HUB_MENUS: Record<string, HubMenu> = {
         labelKey: 'hub.closedOrders',
         action: { type: 'report', report: 'paid-orders' },
       },
+      {
+        id: 'stock',
+        labelKey: 'hub.expStock',
+        action: { type: 'path', to: '/admin/stock' },
+      },
     ],
   },
 };
@@ -336,9 +243,7 @@ export function resolveHubAction(action: HubLeafAction): string {
     floor: '/admin/floor',
     pos: '/admin/pos',
     'pos-paid': '/admin/pos?tab=paid',
-    'pos-close': '/admin/pos?action=close',
-    'pos-cash-in': '/admin/pos?action=cash-in',
-    'pos-cash-out': '/admin/pos?action=cash-out',
+    stock: '/admin/stock',
     kitchen: '/admin/kitchen-view',
   };
   return map[action.report];

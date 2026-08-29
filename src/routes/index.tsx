@@ -17,6 +17,7 @@ import { PrintersPage } from '../pages/admin/PrintersPage';
 import { DiscountsPage } from '../pages/admin/DiscountsPage';
 import { ReportsPage } from '../pages/admin/ReportsPage';
 import { AuditPage } from '../pages/admin/AuditPage';
+import { StockPage } from '../pages/admin/StockPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
 import { useAuthStore } from '../stores/authStore';
 import { getHomePath } from '../utils/roles';
@@ -97,6 +98,7 @@ export function AppRouter() {
           <Route path="roles" element={<RolesPage />} />
           <Route path="printers" element={<PrintersPage />} />
           <Route path="discounts" element={<DiscountsPage />} />
+          <Route path="stock" element={<StockPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="audit" element={<AuditPage />} />
           <Route path="settings" element={<SettingsPage />} />

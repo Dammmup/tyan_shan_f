@@ -159,7 +159,8 @@
     "selectOrder": "Select an order",
     "cashIn": "Cash in",
     "cashOut": "Cash out",
-    "cashComment": "Comment"
+    "cashComment": "Comment",
+    "fiscalReceipt": "Receipt"
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -215,7 +216,16 @@
     "pinCreateHint": "Min 4 digits. PIN will be visible in the employee list.",
     "pinEditHintSet": "PIN is set but the old code was not stored. Enter a new one (min 4), or leave blank.",
     "pinEditHintKnown": "Current PIN: {{pin}}. Enter a new one to replace, or leave blank.",
-    "pinEditHintMissing": "PIN not set yet. Enter at least 4 digits."
+    "pinEditHintMissing": "PIN not set yet. Enter at least 4 digits.",
+    "stockHint": "Dish stock. Sending to kitchen decreases qty; at zero the dish stops.",
+    "stockQty": "Stock",
+    "stockAdjust": "In / out",
+    "stockEmpty": "No tracked dishes yet. Enable tracking below.",
+    "stockEnable": "Enable stock tracking",
+    "stockDelta": "Change",
+    "stockDeltaHint": "Plus = receipt, minus = write-off",
+    "stockReason": "Note",
+    "onePrinterHint": "One active thermal printer is enough for the cafe."
   },
   "hub": {
     "groupOrder": "Order",

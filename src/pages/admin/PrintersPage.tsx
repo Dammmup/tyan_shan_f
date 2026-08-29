@@ -114,6 +114,7 @@ export function PrintersPage() {
   return (
     <AdminPageFrame
       title={t('admin.printers')}
+      hint={t('admin.onePrinterHint')}
       actions={
         <Button leftSection={<IconPlus size={16} />} onClick={openCreate}>
           {t('app.create')}

@@ -5,16 +5,10 @@ import { AdminNavTile, AdminNavTileGrid } from '../../components/AdminNavTile';
 import { AdminPageFrame } from '../../components/AdminPageFrame';
 import { HUB_MENUS, resolveHubAction } from '../../hub/hubConfig';
 
-/** Match dashboard group accents so nested menus feel like one system. */
 const MENU_ACCENT: Record<string, string> = {
   order: '#5f8f4e',
   shift: '#b39a72',
   'cash-reports': '#b39a72',
-  'cash-balance': '#b39a72',
-  'cash-revenue': '#b39a72',
-  'cash-expense': '#b39a72',
-  'cash-special': '#b39a72',
-  'cash-fiscal': '#b39a72',
   'view-reports': '#b39a72',
   staff: '#3a6ea5',
   ops: '#8b3a4a',
