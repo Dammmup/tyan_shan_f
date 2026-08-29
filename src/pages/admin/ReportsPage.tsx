@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { DatePicker, Descriptions, Space, Table, Tabs, Typography } from 'antd';
+import { DatePicker, Descriptions, Table, Tabs, Typography } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -13,7 +13,6 @@ import {
   Table,
   Text,
   TextInput,
-  Title,
   Tooltip,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';

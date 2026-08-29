@@ -5,6 +5,21 @@ import { AdminNavTile, AdminNavTileGrid } from '../../components/AdminNavTile';
 import { AdminPageFrame } from '../../components/AdminPageFrame';
 import { HUB_MENUS, resolveHubAction } from '../../hub/hubConfig';
 
+/** Match dashboard group accents so nested menus feel like one system. */
+const MENU_ACCENT: Record<string, string> = {
+  order: '#5f8f4e',
+  shift: '#b39a72',
+  'cash-reports': '#b39a72',
+  'cash-balance': '#b39a72',
+  'cash-revenue': '#b39a72',
+  'cash-expense': '#b39a72',
+  'cash-special': '#b39a72',
+  'cash-fiscal': '#b39a72',
+  'view-reports': '#b39a72',
+  staff: '#3a6ea5',
+  ops: '#8b3a4a',
+};
+
 export function HubMenuPage() {
   const { menuId = '' } = useParams();
   const { t } = useTranslation();
@@ -13,6 +28,7 @@ export function HubMenuPage() {
 
   const title = menu ? t(menu.titleKey) : t('admin.reports');
   const items = useMemo(() => menu?.items || [], [menu]);
+  const accent = MENU_ACCENT[menuId] || '#1f6f5b';
 
   if (!menu) {
     return (
@@ -35,7 +51,7 @@ export function HubMenuPage() {
           <AdminNavTile
             key={item.id}
             label={t(item.labelKey)}
-            color={item.id === 'close' ? '#8b3a4a' : '#1f6f5b'}
+            color={item.id === 'close' ? '#8b3a4a' : accent}
             onClick={() => {
               if (item.menu) {
                 navigate(`/admin/hub/${item.menu}`);
